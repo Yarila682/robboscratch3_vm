@@ -1,6 +1,7 @@
 const Cast = require('../util/cast');
 const MathUtil = require('../util/math-util');
 const Timer = require('../util/timer');
+//const Robot_command = require('../robot/robot_command');
 
 class Scratch3RobotBlocks {
     constructor (runtime) {
@@ -9,6 +10,7 @@ class Scratch3RobotBlocks {
          * @type {Runtime}
          */
         this.runtime = runtime;
+    //    this.robot_command = new Robot_command();
     }
 
     /**
@@ -17,7 +19,7 @@ class Scratch3RobotBlocks {
      */
     getPrimitives () {
         return {
-            robot_movesteps: this.moveSteps,
+            robot_motors_on_for_seconds: this.robot_motors_on_for_seconds
 
         };
     }
@@ -28,7 +30,7 @@ class Scratch3RobotBlocks {
         };
     }
 
-    moveSteps (args, util) {
+    robot_motors_on_for_seconds (args, util) {
         const steps = Cast.toNumber(args.STEPS);
         const radians = MathUtil.degToRad(90 - util.target.direction);
         const dx = steps * Math.cos(radians);
