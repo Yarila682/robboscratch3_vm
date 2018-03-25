@@ -14,6 +14,8 @@ const Variable = require('./engine/variable');
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
 
+const {RobotConrolAPI} =  require ('Robboscratch3_DeviceControlAPI');
+
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
 /**
@@ -24,11 +26,14 @@ class VirtualMachine extends EventEmitter {
     constructor () {
         super();
 
+
+        this.RCA = new RobotConrolAPI(); //modified_by_Yaroslav //not original
+
         /**
          * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
          * @type {!Runtime}
          */
-        this.runtime = new Runtime();
+        this.runtime = new Runtime(this.RCA);
         centralDispatch.setService('runtime', this.runtime).catch(e => {
             log.error(`Failed to register runtime service: ${JSON.stringify(e)}`);
         });
@@ -88,6 +93,12 @@ class VirtualMachine extends EventEmitter {
         this.monitorBlockListener = this.monitorBlockListener.bind(this);
         this.variableListener = this.variableListener.bind(this);
     }
+
+   getRCA(){
+
+
+      return this.RCA;
+   }
 
     /**
      * Start running the VM - do this before anything else.

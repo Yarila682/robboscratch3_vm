@@ -31,11 +31,45 @@ class Scratch3RobotBlocks {
     }
 
     robot_motors_on_for_seconds (args, util) {
-        const steps = Cast.toNumber(args.STEPS);
-        const radians = MathUtil.degToRad(90 - util.target.direction);
-        const dx = steps * Math.cos(radians);
-        const dy = steps * Math.sin(radians);
-        util.target.setXY(util.target.x + dx, util.target.y + dy);
+
+
+      let power_in_percent = 50; //Мощность в процетах.
+
+
+      let power = Math.round(power_in_percent * 0.63);
+
+        let power_left = power;
+        let power_right = power;
+
+        var execution_time = Number(args.SECONDS) * 1000;
+
+
+
+        if ((execution_time != 0) && (typeof (execution_time) != 'undefined')){
+
+
+          for(var j = 0; j < execution_time / 200 ; j++){
+             setTimeout(function(runtime){
+
+              console.log(`this.runtime.RCA.setRobotPower(${power_left},${power_right})`);
+              runtime.RCA.setRobotPower(power_left,power_right,0);
+            }, 200 * j,this.runtime);
+          }
+
+          setTimeout(function(runtime){
+
+           console.log(`Robot stop!`);
+           runtime.RCA.setRobotPower(0,0,0);
+         }, execution_time,this.runtime);
+
+        }
+
+
+
+
+
+
+
     }
 
     }
