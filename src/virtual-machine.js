@@ -14,7 +14,9 @@ const Variable = require('./engine/variable');
 const {loadCostume} = require('./import/load-costume.js');
 const {loadSound} = require('./import/load-sound.js');
 
-const {RobotConrolAPI} =  require ('Robboscratch3_DeviceControlAPI');
+const {RobotControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
+const {LaboratoryControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
+const {DeviceControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -27,13 +29,15 @@ class VirtualMachine extends EventEmitter {
         super();
 
 
-        this.RCA = new RobotConrolAPI(); //modified_by_Yaroslav //not original
+        this.RCA = new RobotControlAPI(); //modified_by_Yaroslav //not original
+        this.LCA = new LaboratoryControlAPI(); //modified_by_Yaroslav //not original
+        this.DCA = new DeviceControlAPI; //modified_by_Yaroslav //not original
 
         /**
          * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
          * @type {!Runtime}
          */
-        this.runtime = new Runtime(this.RCA);
+        this.runtime = new Runtime(this.RCA, this.LCA);
         centralDispatch.setService('runtime', this.runtime).catch(e => {
             log.error(`Failed to register runtime service: ${JSON.stringify(e)}`);
         });
@@ -98,6 +102,18 @@ class VirtualMachine extends EventEmitter {
 
 
       return this.RCA;
+   }
+
+   getLCA(){
+
+
+      return this.LCA;
+   }
+
+   getDCA(){
+
+
+      return this.DCA;
    }
 
     /**
