@@ -203,30 +203,35 @@ class Scratch3LaboratoryBlocks {
 
       console.log(`lab_sensor sensor: ${args.LAB_SENSOR}`);
 
-      switch (args.LAB_SENSOR) {
+        return   this.runtime.LCA.getSensorData(args.LAB_SENSOR);
 
-        case "light":
+      // switch (args.LAB_SENSOR) {
+      //
+      //   case "light":
+      //
+      //       return   this.runtime.LCA.getSensorsData().a5[0];
+      //
+      //     break;
+      //
+      //   case "sound":
+      //
+      //           return   this.runtime.LCA.getSensorsData().a4[0];
+      //
+      //       break;
+      //
+      //   case "slider":
+      //
+      //         return   this.runtime.LCA.getSensorsData().a7[0];
+      //
+      //       break;
+      //
+      //
+      //   default:
+      //
+      // }
 
-            return   this.runtime.LCA.getSensorsData().a5[0];
-
-          break;
-
-        case "sound":
-
-                return   this.runtime.LCA.getSensorsData().a4[0];
-
-            break;
-
-        case "slider":
-
-              return   this.runtime.LCA.getSensorsData().a7[0];
-
-            break;
 
 
-        default:
-
-      }
 
       }
 
@@ -242,9 +247,9 @@ class Scratch3LaboratoryBlocks {
 
         console.log(`lab_external_sensor sensor: ${args.LAB_EXTERNAL_SENSOR}`);
 
-        var pin = Number(args.LAB_EXTERNAL_SENSOR.replace("A",""));
+      //  var pin = Number(args.LAB_EXTERNAL_SENSOR.replace("A",""));
 
-        return   this.runtime.LCA.getSensorData(pin)[0];
+        return   this.runtime.LCA.getSensorData(args.LAB_EXTERNAL_SENSOR);
 
       }
 
@@ -252,9 +257,9 @@ class Scratch3LaboratoryBlocks {
 
       console.log(`lab_analog_pin analog_pin: ${args.LAB_ANALOG_PIN}`);
 
-      var pin = Number(args.LAB_ANALOG_PIN.replace("A",""));
+    //  var pin = Number(args.LAB_ANALOG_PIN.replace("A",""));
 
-      return   this.runtime.LCA.getSensorData(pin)[0];
+      return   this.runtime.LCA.getSensorData(args.LAB_ANALOG_PIN);
 
       }
 
