@@ -77,38 +77,76 @@ class Scratch3RobotBlocks {
 
       //let power = Math.round(power_in_percent * 0.63);
 
-        let power_left = this.power_left;
-        let power_right = this.power_right;
+        // let power_left = this.power_left;
+        // let power_right = this.power_right;
+        //
+        // var execution_time = Number(args.SECONDS) * 1000;
+        //
+        //
+        //
+        // if ((execution_time != 0) && (typeof (execution_time) != 'undefined')){
+        //
+        //   clearInterval(this.motors_off_interval);
+        //
+        // //  clearTimeout(this.robot_motors_on_for_seconds_timeout);        //Maxim patch
+        // //  clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);   //Безконечная работа двух последовательных блоков.
+        //
+        //
+        //   for(var j = 0; j < execution_time / 200 ; j++){
+        //   this.robot_motors_on_for_seconds_timeout =    setTimeout(function(runtime){
+        //
+        //       console.log(`this.runtime.RCA.setRobotPower(${power_left},${power_right})`);
+        //       runtime.RCA.setRobotPower(power_left,power_right,0);
+        //     }, 200 * j,this.runtime);
+        //   }
+        //
+        // this.robot_motors_on_for_seconds_timeout_stop =   setTimeout(function(runtime){
+        //
+        //    console.log(`Robot stop!`);
+        //    runtime.RCA.setRobotPower(0,0,0);
+        //  }, execution_time,this.runtime);
+        //
+        // }
 
-        var execution_time = Number(args.SECONDS) * 1000;
+
+
+        clearInterval(this.motors_on_interval);
+      //  clearInterval(this.motors_off_interval);
+    //   this.runtime.RCA.setRobotPower(0,0,0);
+
+
+        if (util.stackFrame.timer) {
+
+            const timeElapsed = util.stackFrame.timer.timeElapsed();
+            if (timeElapsed < util.stackFrame.duration * 1000) {
+
+              if (timeElapsed % 200 == 0){
+
+                      this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
+
+              }
+
+                util.yield();
+
+            } else {
+
+                this.runtime.RCA.setRobotPower(0,0,0);
+            }
+        } else {
+            // First time: save data for future use.
+            util.stackFrame.timer = new Timer();
+            util.stackFrame.timer.start();
+            util.stackFrame.duration = Cast.toNumber(args.SECONDS);
 
 
 
-        if ((execution_time != 0) && (typeof (execution_time) != 'undefined')){
 
-          clearInterval(this.motors_off_interval);
-          clearTimeout(this.robot_motors_on_for_seconds_timeout);
-          clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);
+            if (util.stackFrame.duration <= 0) {
 
-
-          for(var j = 0; j < execution_time / 200 ; j++){
-          this.robot_motors_on_for_seconds_timeout =    setTimeout(function(runtime){
-
-              console.log(`this.runtime.RCA.setRobotPower(${power_left},${power_right})`);
-              runtime.RCA.setRobotPower(power_left,power_right,0);
-            }, 200 * j,this.runtime);
-          }
-
-        this.robot_motors_on_for_seconds_timeout_stop =   setTimeout(function(runtime){
-
-           console.log(`Robot stop!`);
-           runtime.RCA.setRobotPower(0,0,0);
-         }, execution_time,this.runtime);
-
+                return;
+            }
+            util.yield();
         }
-
-
-
 
 
 
@@ -170,7 +208,7 @@ class Scratch3RobotBlocks {
       }
 
 
-    }, 0,this.runtime,this);
+    }, 200,this.runtime,this);
 
     }
 
@@ -192,16 +230,18 @@ class Scratch3RobotBlocks {
 
       this.need_to_stop = true;
 
-      this.motors_off_interval =   setInterval(function(runtime,self){
+      this.runtime.RCA.setRobotPower(0,0,0);
 
-        if (self.need_to_stop){
-
-
-            runtime.RCA.setRobotPower(0,0,0);
-        }
-
-
-      }, 0,this.runtime,this);
+      // this.motors_off_interval =   setInterval(function(runtime,self){
+      //
+      //   if (self.need_to_stop){
+      //
+      //
+      //       runtime.RCA.setRobotPower(0,0,0);
+      //   }
+      //
+      //
+      // }, 0,this.runtime,this);
 
 
     }
@@ -323,6 +363,43 @@ class Scratch3RobotBlocks {
 
     }
 
+    robot_get_rgb_sensor_data(args){
+
+          console.log(`robot_get_rgb_sensor_data   sensor: ${args.ROBOT_SENSORS_FOR_RGB} color: ${args.RGB_VALUES} `);
+
+          let sensor_id = Number(args.ROBOT_SENSORS_FOR_RGB.replace("sensor","")) - 1;
+
+          let rgb_array = this.runtime.RCA.getColorCorrectedRawValues(sensor_id);
+
+          switch (args.RGB_VALUES) {
+
+            case "red":
+
+                  return rgb_array[0];
+
+              break;
+
+          case "green":
+
+                  return rgb_array[1];
+
+            break;
+
+          case "blue":
+
+                    return rgb_array[2];
+
+              break;
+
+            default:
+
+                  return -1; // TODO: правильно обрабатывать
+
+          }
+
+
+    }
+
     check_value_out_of_range(value,low,high){
 
         return (value > high)?high:((value < low)?low:value);
@@ -393,20 +470,100 @@ class Scratch3RobotBlocks {
 
     }
 
+    calculate_steps_delta(){
+
+        let leftPath = this.runtime.RCA.getLeftPath();
+        let rightPath = this.runtime.RCA.getRightPath();
+
+        return  ((leftPath > rightPath)?leftPath:rightPath )  - this.stepsInitValue;
+
+
+
+      //  return  this.runtime.RCA.getLeftPath()  - this.stepsInitValue; // TODO: проверить на 65535
+
+    }
+
+    calculate_steps_delta_left(){
+
+
+
+            return  this.runtime.RCA.getLeftPath()  - this.stepsInitValueLeft; // TODO: проверить на 65535
+
+    }
+
+    calculate_steps_delta_right(){
+
+
+
+      return  this.runtime.RCA.getRightPath()  - this.stepsInitValueRight; // TODO: проверить на 65535
+
+    }
+
     robot_motors_on_for_steps(args, util){
 
-      var steps =   this.check_65535(args.STEPS);
+      // var steps =   this.check_65535(args.STEPS);
+      //
+      //
+      //
+      // if (steps != 0){
+      //
+      //   let power_left = this.power_left;
+      //   let power_right = this.power_right;
+      //
+      //   this.runtime.RCA.setRobotPowerAndStepLimits(power_left,power_right,steps,0);
+      //
+      //
+      //
+      // }else return;
 
-      if (steps != 0){
 
-        let power_left = this.power_left;
-        let power_right = this.power_right;
-
-        this.runtime.RCA.setRobotPowerAndStepLimits(power_left,power_right,steps,0);
+    //  clearInterval(this.motors_off_interval);
+    // this.runtime.RCA.setRobotPower(0,0,0);
 
 
+      if ((util.stackFrame.steps != null) && (typeof(util.stackFrame.steps) != 'undefined')) {
 
+        var stepsDeltaLeft  =  this.calculate_steps_delta_left();
+        var stepsDeltaRight =  this.calculate_steps_delta_right();
+
+        if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps) ) {  // TODO: сделать корректную проверку для робота без энкодеров
+
+            console.log(`robot_motors_on_for_steps stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+
+            util.yield();
+
+          } else{
+
+
+                console.log(`robot_motors_on_for_steps  exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+
+                util.stackFrame.steps = null;
+
+          }
+      } else {
+
+            clearInterval(this.motors_on_interval);
+
+          util.stackFrame.steps = this.check_65535(args.STEPS);
+
+          this.stepsInitValueLeft  =  this.runtime.RCA.getLeftPath();
+          this.stepsInitValueRight =  this.runtime.RCA.getRightPath();
+
+
+          if (util.stackFrame.steps <= 0) {
+
+              return;
+          }
+
+          this.runtime.RCA.setRobotPowerAndStepLimits(this.power_left,this.power_right,util.stackFrame.steps,0);
+
+
+
+
+
+          util.yield();
       }
+
 
 
 
@@ -414,30 +571,159 @@ class Scratch3RobotBlocks {
 
     robot_turnright(args, util){
 
-          var steps = this.check_65535(Math.round(args.DEGREES / DEGREE_RATIO));
 
-          if (steps != 0){
+    //   clearInterval(this.motors_on_interval);
+    // //  clearInterval(this.motors_off_interval);
+    //  this.runtime.RCA.setRobotPower(0,0,0);
+    //
+    //
+    //
+    //       var steps = this.check_65535(Math.round(args.DEGREES / DEGREE_RATIO));
+    //
+    //       if (steps != 0){
+    //
+    //       let power_left =   Math.round(30 * 0.63);
+    //       let power_right =  Math.round(30 * 0.63) + 64;
+    //
+    //       this.runtime.RCA.setRobotPowerAndStepLimits(power_left,power_right,steps,0);
+    //
+    //       }
 
-          let power_left =   Math.round(30 * 0.63);
-          let power_right =  Math.round(30 * 0.63) + 64;
 
-          this.runtime.RCA.setRobotPowerAndStepLimits(power_left,power_right,steps,0);
 
-          }
+
+
+
+    if ((util.stackFrame.steps != null) && (typeof(util.stackFrame.steps) != 'undefined')) {
+
+      //  const stepsDelta =  this.calculate_steps_delta();
+
+      var stepsDeltaLeft  =  this.calculate_steps_delta_left();
+      var stepsDeltaRight =  this.calculate_steps_delta_right();
+
+      if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps) ) { // TODO: сделать корректную проверку для робота без энкодеров
+
+            console.log(`robot_turnright stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+
+
+        //  util.stackFrame.steps_counter++;
+
+          util.yield();
+
+        } else{
+
+              console.log(`robot_turnright exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+
+              util.stackFrame.steps = null;
+
+        }
+    } else {
+
+        util.stackFrame.steps = this.check_65535(Math.round(args.DEGREES / DEGREE_RATIO))
+        this.stepsInitValueLeft  =  this.runtime.RCA.getLeftPath();
+        this.stepsInitValueRight =  this.runtime.RCA.getRightPath();
+      //  util.stackFrame.steps_counter = 0;
+
+
+        clearInterval(this.motors_on_interval);
+        // //  clearInterval(this.motors_off_interval);
+      //  this.runtime.RCA.setRobotPower(0,0,0);
+
+        if (util.stackFrame.steps <= 0) {
+
+            return;
+        }
+
+
+
+        let power_left =   Math.round(30 * 0.63);
+        let power_right =  Math.round(30 * 0.63) + 64;
+
+        this.runtime.RCA.setRobotPowerAndStepLimits(power_left,power_right, util.stackFrame.steps ,0);
+      //  util.stackFrame.steps_counter++;
+
+
+
+
+        util.yield();
+    }
+
 
     }
 
     robot_turnleft(args, util){
 
-          var steps = this.check_65535(Math.round(args.DEGREES / DEGREE_RATIO));
+          //   clearInterval(this.motors_on_interval);
+          // //  clearInterval(this.motors_off_interval);
+          //  this.runtime.RCA.setRobotPower(0,0,0);
+          //
+          // var steps = this.check_65535(Math.round(args.DEGREES / DEGREE_RATIO));
+          //
+          // if (steps != 0){
+          //
+          // let power_left =   Math.round(30 * 0.63) + 64;
+          // let power_right =  Math.round(30 * 0.63);
+          //
+          // this.runtime.RCA.setRobotPowerAndStepLimits(power_left,power_right,steps,0);
+          //
+          // }
 
-          if (steps != 0){
 
-          let power_left =   Math.round(30 * 0.63) + 64;
-          let power_right =  Math.round(30 * 0.63);
 
-          this.runtime.RCA.setRobotPowerAndStepLimits(power_left,power_right,steps,0);
 
+
+          if ((util.stackFrame.steps != null) && (typeof(util.stackFrame.steps) != 'undefined')) {
+
+            //  const stepsDelta =  this.calculate_steps_delta();
+
+            var stepsDeltaLeft  =  this.calculate_steps_delta_left();
+            var stepsDeltaRight =  this.calculate_steps_delta_right();
+
+            if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps) ) { // TODO: сделать корректную проверку для робота без энкодеров
+
+                  console.log(`robot_turnleft stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+
+
+              //  util.stackFrame.steps_counter++;
+
+                util.yield();
+
+              } else{
+
+                    console.log(`robot_turnleft exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+
+                    util.stackFrame.steps = null;
+
+              }
+          } else {
+
+              util.stackFrame.steps = this.check_65535(Math.round(args.DEGREES / DEGREE_RATIO))
+              this.stepsInitValueLeft  =  this.runtime.RCA.getLeftPath();
+              this.stepsInitValueRight =  this.runtime.RCA.getRightPath();
+            //  util.stackFrame.steps_counter = 0;
+
+
+              clearInterval(this.motors_on_interval);
+              // //  clearInterval(this.motors_off_interval);
+            //  this.runtime.RCA.setRobotPower(0,0,0);
+
+              if (util.stackFrame.steps <= 0) {
+
+                  return;
+              }
+
+
+
+              let power_left =   Math.round(30 * 0.63) + 64;
+              let power_right =  Math.round(30 * 0.63);
+
+              this.runtime.RCA.setRobotPowerAndStepLimits(power_left,power_right, util.stackFrame.steps ,0);
+            //  util.stackFrame.steps_counter++;
+
+
+
+
+              util.yield();
           }
 
     }
