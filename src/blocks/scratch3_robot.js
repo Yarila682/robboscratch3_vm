@@ -57,7 +57,8 @@ class Scratch3RobotBlocks {
             robot_turn_led_on:this.robot_turn_led_on,
             robot_turn_led_off:this.robot_turn_led_off,
             robot_claw_closed:this.robot_claw_closed,
-            robot_claw_state:this.robot_claw_state
+            robot_claw_state:this.robot_claw_state,
+            robot_reset_trip_meters: this.robot_reset_trip_meters
 
 
         };
@@ -121,6 +122,8 @@ class Scratch3RobotBlocks {
             if (timeElapsed < util.stackFrame.duration * 1000) {
 
               if (timeElapsed % 200 == 0){
+
+                      console.log(`robot_motors_on_for_seconds power_left: ${this.power_left} power_right: ${this.power_right} timeElapsed: ${timeElapsed} duration:${ util.stackFrame.duration * 1000} `);
 
                       this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
 
@@ -311,31 +314,31 @@ class Scratch3RobotBlocks {
           switch (sensor) {
             case "sensor1":
 
-            sensor_data = this.runtime.RCA.getSensorData(0)[3];
+            sensor_data = this.runtime.RCA.getSensorData(0);
 
               break;
 
            case "sensor2":
 
-                sensor_data = this.runtime.RCA.getSensorData(1)[3];
+                sensor_data = this.runtime.RCA.getSensorData(1);
 
               break;
 
           case "sensor3":
 
-                sensor_data = this.runtime.RCA.getSensorData(2)[3];
+                sensor_data = this.runtime.RCA.getSensorData(2);
 
               break;
 
           case "sensor4":
 
-                sensor_data = this.runtime.RCA.getSensorData(3)[3];
+                sensor_data = this.runtime.RCA.getSensorData(3);
 
                  break;
 
          case "sensor5":
 
-                sensor_data = this.runtime.RCA.getSensorData(4)[3];
+                sensor_data = this.runtime.RCA.getSensorData(4);
 
               break;
 
@@ -842,6 +845,14 @@ class Scratch3RobotBlocks {
 
       }
 
+
+    }
+
+    robot_reset_trip_meters(args, util){
+
+      console.log(`robot_reset_trip_meters`);
+
+      this.runtime.RCA.resetTripMeters();
 
     }
 
