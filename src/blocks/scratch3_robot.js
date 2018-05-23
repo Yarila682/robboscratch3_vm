@@ -111,7 +111,9 @@ class Scratch3RobotBlocks {
 
 
 
-        clearInterval(this.motors_on_interval);
+
+
+
       //  clearInterval(this.motors_off_interval);
     //   this.runtime.RCA.setRobotPower(0,0,0);
 
@@ -148,6 +150,18 @@ class Scratch3RobotBlocks {
 
                 return;
             }
+
+
+            clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);
+            clearInterval(this.motors_on_interval);
+
+
+            this.robot_motors_on_for_seconds_timeout_stop =   setTimeout(function(runtime){
+
+               console.log(`Robot stop!`);
+               runtime.RCA.setRobotPower(0,0,0);
+             },util.stackFrame.duration*1000,this.runtime);
+
             util.yield();
         }
 
@@ -163,6 +177,8 @@ class Scratch3RobotBlocks {
 
       let power_left = this.power_left;
       let power_right = this.power_right;
+
+      clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);
 
       clearInterval(this.motors_off_interval);
       clearInterval(this.motors_on_interval);
@@ -187,7 +203,7 @@ class Scratch3RobotBlocks {
 
       console.log(`this.runtime.RCA.robot_motors_on(${power_left},${power_right})  Time: ${Date.now() - this.time}`);
 
-        this.runtime.RCA.setRobotPower(power_left,power_right,0);
+        this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
 
     this.motors_on_interval =   setInterval(function(runtime,self){
 
@@ -198,7 +214,7 @@ class Scratch3RobotBlocks {
         if (self.motors_on_loop_need){
 
           console.log(`Motors on interval2 Time: ${Date.now() - self.time}`);
-          runtime.RCA.setRobotPower(power_left,power_right,0);
+          runtime.RCA.setRobotPower(self.power_left,self.power_right,0);
 
         }
 
@@ -211,7 +227,7 @@ class Scratch3RobotBlocks {
       }
 
 
-    }, 200,this.runtime,this);
+    }, 25,this.runtime,this);
 
     }
 
@@ -523,13 +539,14 @@ class Scratch3RobotBlocks {
     //  clearInterval(this.motors_off_interval);
     // this.runtime.RCA.setRobotPower(0,0,0);
 
+      clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);
 
-      if ((util.stackFrame.steps != null) && (typeof(util.stackFrame.steps) != 'undefined')) {
+      if ((util.stackFrame.steps != null) && (typeof(util.stackFrame.steps) != 'undefined') ) {
 
         var stepsDeltaLeft  =  this.calculate_steps_delta_left();
         var stepsDeltaRight =  this.calculate_steps_delta_right();
 
-        if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps) ) {  // TODO: сделать корректную проверку для робота без энкодеров
+        if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps) && (!this.need_to_stop) ) {  // TODO: сделать корректную проверку для робота без энкодеров
 
             console.log(`robot_motors_on_for_steps stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
@@ -558,6 +575,7 @@ class Scratch3RobotBlocks {
               return;
           }
 
+          this.need_to_stop = false;
           this.runtime.RCA.setRobotPowerAndStepLimits(this.power_left,this.power_right,util.stackFrame.steps,0);
 
 
@@ -594,7 +612,7 @@ class Scratch3RobotBlocks {
 
 
 
-
+    clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);
 
 
     if ((util.stackFrame.steps != null) && (typeof(util.stackFrame.steps) != 'undefined')) {
@@ -604,7 +622,7 @@ class Scratch3RobotBlocks {
       var stepsDeltaLeft  =  this.calculate_steps_delta_left();
       var stepsDeltaRight =  this.calculate_steps_delta_right();
 
-      if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps) ) { // TODO: сделать корректную проверку для робота без энкодеров
+      if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps)  && (!this.need_to_stop) ) { // TODO: сделать корректную проверку для робота без энкодеров
 
             console.log(`robot_turnright stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
@@ -646,7 +664,7 @@ class Scratch3RobotBlocks {
       //  util.stackFrame.steps_counter++;
 
 
-
+          this.need_to_stop = false;
 
         util.yield();
     }
@@ -672,17 +690,17 @@ class Scratch3RobotBlocks {
           // }
 
 
+          clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);
 
 
-
-          if ((util.stackFrame.steps != null) && (typeof(util.stackFrame.steps) != 'undefined')) {
+          if ((util.stackFrame.steps != null) && (typeof(util.stackFrame.steps) != 'undefined') ) {
 
             //  const stepsDelta =  this.calculate_steps_delta();
 
             var stepsDeltaLeft  =  this.calculate_steps_delta_left();
             var stepsDeltaRight =  this.calculate_steps_delta_right();
 
-            if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps) ) { // TODO: сделать корректную проверку для робота без энкодеров
+            if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps)  && (!this.need_to_stop) ) { // TODO: сделать корректную проверку для робота без энкодеров
 
                   console.log(`robot_turnleft stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
@@ -724,7 +742,7 @@ class Scratch3RobotBlocks {
             //  util.stackFrame.steps_counter++;
 
 
-
+              this.need_to_stop = false;
 
               util.yield();
           }
