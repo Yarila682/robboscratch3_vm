@@ -28,7 +28,8 @@ class Scratch3LaboratoryBlocks {
             lab_button_pressed: this.lab_button_pressed,
             lab_external_sensor: this.lab_external_sensor,
             lab_analog_pin: this.lab_analog_pin,
-            lab_digital_pin: this.lab_digital_pin
+            lab_digital_pin: this.lab_digital_pin,
+            lab_play_note: this.lab_play_note
 
 
 
@@ -268,6 +269,27 @@ class Scratch3LaboratoryBlocks {
         console.log(`lab_digital_pin digital_pin: ${args.LAB_DIGITAL_PIN}`);
 
         return this.runtime.LCA.labDigitalPinState(0,Number(args.LAB_DIGITAL_PIN));
+
+      }
+
+      lab_play_note(args){
+
+        console.log(`lab_play_note: ${args.LAB_NOTE}`);
+
+        let note = args.LAB_NOTE;
+
+        if (isNaN(note)) return;
+
+       note = Math.round(args.LAB_NOTE);
+
+        note = (note < 48)?48:note;
+        note = (note  > 72)?72:note;
+
+        note = note - 48;
+
+
+        this.runtime.LCA.labPlayNote(0,note);
+
 
       }
 
