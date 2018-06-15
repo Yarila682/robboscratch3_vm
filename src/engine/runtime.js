@@ -106,12 +106,14 @@ let rendererDrawProfilerId = -1;
  * @constructor
  */
 class Runtime extends EventEmitter {
-    constructor (RCA,LCA) {
+    constructor (RCA,LCA,QCA) {
         super();
 
         this.RCA = RCA;
 
         this.LCA = LCA;
+
+        this.QCA = QCA;
 
         /**
          * Target management and storage.

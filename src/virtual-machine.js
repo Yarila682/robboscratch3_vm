@@ -16,6 +16,7 @@ const {loadSound} = require('./import/load-sound.js');
 
 const {RobotControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
 const {LaboratoryControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
+const {QuadcopterControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
 const {DeviceControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
@@ -31,6 +32,7 @@ class VirtualMachine extends EventEmitter {
 
         this.RCA = new RobotControlAPI(); //modified_by_Yaroslav //not original
         this.LCA = new LaboratoryControlAPI(); //modified_by_Yaroslav //not original
+        this.QCA = new QuadcopterControlAPI(); //modified_by_Yaroslav //not original
         this.DCA = new DeviceControlAPI; //modified_by_Yaroslav //not original
 
         /**
@@ -108,6 +110,12 @@ class VirtualMachine extends EventEmitter {
 
 
       return this.LCA;
+   }
+
+   getQCA(){
+
+
+      return this.QCA;
    }
 
    getDCA(){
