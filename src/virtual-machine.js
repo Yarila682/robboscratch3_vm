@@ -39,7 +39,7 @@ class VirtualMachine extends EventEmitter {
          * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
          * @type {!Runtime}
          */
-        this.runtime = new Runtime(this.RCA, this.LCA);
+        this.runtime = new Runtime(this.RCA, this.LCA,this.QCA);
         centralDispatch.setService('runtime', this.runtime).catch(e => {
             log.error(`Failed to register runtime service: ${JSON.stringify(e)}`);
         });
