@@ -19,8 +19,14 @@ class Scratch3QuadcopterBlocks {
           this.noww=0;
           this.direction = 0;//отвечает за движение при установленной команде copter_set_direction
           this.fack = 0;//отвечает за задержку и инициализацию при задержке
-          this.delta= 0.05;
+          this.delta= 0.1; //0.05
           this.speed= 1;
+
+          this.yielded_time_start = Date.now(); //Счётчик задержки блока. При привышении yilded_max_time скипаем блок, чтобы избежать зависания системы.
+          this.yielded_time_now   = Date.now();
+          this.yielded_max_time = 1 * 60 * 1000;  //// TODO: сделать рассчёт через секунды требуемые на выполнение блока
+
+
             }
 
     /**
@@ -100,11 +106,16 @@ class Scratch3QuadcopterBlocks {
     copter_fly_distance(args, util){
       if(this.fack==0)
       {
-        this.x = this.x + args.CENTIMETERS * Math.cos((this.yaw+this.dir) * Math.PI / 180);
-        this.y = this.y + args.CENTIMETERS * Math.sin((this.yaw+this.dir) * Math.PI / 180);
+        this.x = this.x + Number(args.CENTIMETERS) * Math.cos((this.yaw+this.dir) * Math.PI / 180);
+        this.y = this.y + Number(args.CENTIMETERS) * Math.sin((this.yaw+this.dir) * Math.PI / 180);
+
+        this.yielded_time_start = Date.now();
+        this.yielded_time_now = Date.now();
+
       this.runtime.QCA.move_to_coord(this.x,this.y,this.z,0);
       this.fack=1;
       util.yield();
+      return;
       }
 
       else if(this.fack == 1)
@@ -116,11 +127,22 @@ class Scratch3QuadcopterBlocks {
           this.fack=2;
         }
       else {
+
+        if ((this.yielded_time_now - this.yielded_time_start ) >= this.yielded_max_time){ //Нужно, чтобы избежать зависания блока.
+
+          this.fack=2;
+        //  this.yielded = 0;
+        }
+
+          this.runtime.QCA.move_to_coord(this.x,this.y,this.z,0);
+          this.yielded_time_now = Date.now();
           util.yield();
+          return;
         }
       }
 
       this.fack=0;
+      this.runtime.QCA.move_with_speed(0,0,0,this.z);
     }
 
     /*OK*/
@@ -131,13 +153,15 @@ class Scratch3QuadcopterBlocks {
     let vy =  this.speed* Math.sin((this.yaw+this.dir) * Math.PI / 180);
     this.runtime.QCA.move_with_speed(vx,vy,0,this.z);
     this.fack=1;
-    let time_to_fly = args.SECONDS*1000;
+    let time_to_fly = Number(args.SECONDS)*1000;
     setTimeout(() => { this.fack = 2; }, time_to_fly);
     util.yield();
+    return;
     }
     else if ( this.fack != 2)
     {
     util.yield();
+    return;
     }
     this.x=this.runtime.QCA.get_coord("X");
     this.y=this.runtime.QCA.get_coord("Y");
@@ -150,17 +174,21 @@ class Scratch3QuadcopterBlocks {
     copter_fly_for_time_with_speed(args, util){
       if(this.fack==0)
       {
-      let vx =  args.X_SPEED;
-      let vy =  args.Y_SPEED;
+      let vx =  Number(args.X_SPEED);
+      let vy =  Number(args.Y_SPEED);
+      this.z = this.runtime.QCA.get_coord("Z");
+
       this.runtime.QCA.move_with_speed(vx,vy,0,this.z);
       this.fack=1;
-      let time_to_fly = args.SECONDS*1000;
-      setTimeout(function() { this.fack = 2; }, time_to_fly);
+      let time_to_fly = Number(args.SECONDS*1000);
+      setTimeout(() => { this.fack = 2; }, time_to_fly);
       util.yield();
+      return;
       }
       else if ( this.fack != 2)
       {
       util.yield();
+      return;
       }
       this.runtime.QCA.move_with_speed(0,0,0,this.z);
       this.fack=0;
@@ -171,17 +199,43 @@ class Scratch3QuadcopterBlocks {
     copter_change_x_by(args, util){
       if(this.fack==0)
       {
-      this.x = this.x + args.DISTANCE_DELTA;
+
+
+
+      this.x = Number(this.runtime.QCA.get_coord("X"));
+      this.x = this.x + Number(args.DISTANCE_DELTA);
+
+
+      this.y = Number(this.runtime.QCA.get_coord("Y"));
+      this.z = Number(this.runtime.QCA.get_coord("Z"));
+
+      this.yielded_time_start = Date.now();
+      this.yielded_time_now = Date.now();
+
       this.runtime.QCA.move_to_coord(this.x,this.y,this.z,0);
+
       this.fack = 1;
+      //this.yielded++;
       util.yield();
+      return;
       }
       else if(this.fack != 2)
       {
+        if ((this.yielded_time_now - this.yielded_time_start ) >= this.yielded_max_time){ //Нужно, чтобы избежать зависания блока.
+
+          this.fack=2;
+        //  this.yielded = 0;
+        }
+
         this.nowx = this.runtime.QCA.get_coord("X");
         if(Math.abs(this.nowx-this.x)<this.delta);
         this.fack=2;
+
+        this.runtime.QCA.move_to_coord(this.x,this.y,this.z,0);
+      //  this.yielded++;
+        this.yielded_time_now = Date.now();
         util.yield();
+        return;
       }
       this.runtime.QCA.move_with_speed(0,0,0,this.z);
       this.fack=0;
@@ -190,18 +244,43 @@ class Scratch3QuadcopterBlocks {
     copter_change_y_by(args, util){
       if(this.fack==0)
       {
-      this.y = this.y + args.DISTANCE_DELTA;
+
+      //this.yielded = 0;
+
+      this.y = Number(this.runtime.QCA.get_coord("Y"));
+      this.y = this.y + Number(args.DISTANCE_DELTA);
+
+      this.x = Number(this.runtime.QCA.get_coord("X"));
+      this.z = Number(this.runtime.QCA.get_coord("Z"));
+
+      this.yielded_time_start = Date.now();
+      this.yielded_time_now = Date.now();
+
       this.runtime.QCA.move_to_coord(this.x,this.y,this.z,0);
       this.fack = 1;
+      //this.yielded++;
       util.yield();
+      return;
 
       }
       else if(this.fack != 2)
       {
+
+        if ((this.yielded_time_now - this.yielded_time_start ) >= this.yielded_max_time){ //Нужно, чтобы избежать зависания блока.
+
+          this.fack=2;
+        //  this.yielded = 0;
+        }
+
         this.nowy = this.runtime.QCA.get_coord("Y");
         if(Math.abs(this.nowy-this.y)<this.delta)
         this.fack=2;
+
+        this.runtime.QCA.move_to_coord(this.x,this.y,this.z,0);
+      //  this.yielded++;
+        this.yielded_time_now = Date.now();
         util.yield();
+        return;
       }
       this.runtime.QCA.move_with_speed(0,0,0,this.z);
       this.fack=0;
@@ -210,18 +289,42 @@ class Scratch3QuadcopterBlocks {
     copter_change_z_by(args, util){
       if(this.fack==0)
       {
-      this.z = this.z + args.DISTANCE_DELTA;
-      this.runtime.QCA.move_to_coord(this.x,this.y,this.z,0);
+
+    //  this.yielded = 0;
+
+      this.z = Number(this.runtime.QCA.get_coord("Z"));
+      this.z = this.z + Number(args.DISTANCE_DELTA);
+
+      console.log(`copter_change_z_by: ${this.z}`)
+    //  this.runtime.QCA.move_to_coord(this.x,this.y,this.z,0);
+
+    this.yielded_time_start = Date.now();
+    this.yielded_time_now = Date.now();
+
+      this.runtime.QCA.move_with_speed(0,0,0,this.z);
       this.fack = 1;
+    //  this.yielded++;
       util.yield();
+      return;
       }
       else if(this.fack != 2)
       {
-        this.nowz = this.runtime.QCA.get_coord("X");
+
+        if ((this.yielded_time_now - this.yielded_time_start ) >= this.yielded_max_time){ //Нужно, чтобы избежать зависания блока.
+
+          this.fack=2;
+        //  this.yielded = 0;
+        }
+
+        this.nowz = this.runtime.QCA.get_coord("Z");
         if(Math.abs(this.nowz-this.z)<this.delta)
         this.fack=2;
+      //  this.yielded++;
+        this.yielded_time_now = Date.now();
         util.yield();
+        return;
       }
+
       this.runtime.QCA.move_with_speed(0,0,0,this.z);
       this.fack=0;
     }
@@ -242,20 +345,23 @@ class Scratch3QuadcopterBlocks {
 
       if(this.fack==0)
       {
-      let vx = (args.X_COORD-this.x)/args.SECONDS;
-      let vy = (args.Y_COORD-this.y)/args.SECONDS;
-      let vz = (args.Z_COORD-this.z)/args.SECONDS;
+      let vx = (Number(args.X_COORD)-this.x)/Number(args.SECONDS);
+      let vy = (Number(args.Y_COORD)-this.y)/Number(args.SECONDS);
+      let vz = (Number(args.Z_COORD)-this.z)/Number(args.SECONDS);
       //TODO
       //СДЕЛАТЬ ОГРАНИЧЕНИЯ НА ПАРАМЕТРЫ, ВЫЯСНИТЬ МАКС СКОРОСТЬ
-      this.runtime.QCA.move_with_speed(vx,vy,vz,this.yaw);
+      this.runtime.QCA.move_with_speed(vx,vy,this.z,this.yaw);
       this.fack=1;
-      let time_to_fly = args.SECONDS*1000;
-      setTimeout(function() { this.fack = 2; }, time_to_fly);
+      let time_to_fly = Number(args.SECONDS)*1000;
+      setTimeout(() => { this.fack = 2; }, time_to_fly);
       util.yield();
+      return;
+
       }
       else if ( this.fack != 2)
       {
       util.yield();
+      return;
       }
       this.runtime.QCA.move_with_speed(0,0,0,this.z);
       this.fack=0;
@@ -264,19 +370,42 @@ class Scratch3QuadcopterBlocks {
     copter_fly_to_coords(args, util){
         if(this.fack==0)
         {
-          this.x = args.X_COORD;
-          this.y = args.Y_COORD;
-          this.z = args.Z_COORD;
+      //    this.yielded = 0;
+
+          this.x = Number(args.X_COORD);
+          this.y = Number(args.Y_COORD);
+          this.z = Number(args.Z_COORD);
+
+          this.yielded_time_start = Date.now();
+          this.yielded_time_now = Date.now();
+
         this.runtime.QCA.move_to_coord(this.x,this.y,this.z,0);
         this.fack=1;
+      //  this.yielded++;
         util.yield();
+        return;
         }
         else if(this.fack != 2)
         {
+          if ((this.yielded_time_now - this.yielded_time_start ) >= this.yielded_max_time){ //Нужно, чтобы избежать зависания блока.
+
+            this.fack=2;
+          //  this.yielded = 0;
+          }
+
           this.nowx = this.runtime.QCA.get_coord("X");
+          this.nowy = this.runtime.QCA.get_coord("Y");
+          this.nowz = this.runtime.QCA.get_coord("Z");
+
           if((Math.abs(this.nowx-this.x)<this.delta)&&(Math.abs(this.nowy-this.y)<this.delta)&&(Math.abs(this.nowz-this.z)<this.delta))
           this.fack=2;
+
+          this.runtime.QCA.move_to_coord(this.x,this.y,this.z,0);
+        //  this.yielded++;
+          this.yielded_time_start = Date.now();
           util.yield();
+
+          return;
         }
         this.runtime.QCA.move_with_speed(0,0,0,this.z);
         this.fack=0;
@@ -286,17 +415,37 @@ class Scratch3QuadcopterBlocks {
       {
           if(this.fack==0)
           {
-          this.yaw += args.DEGREES;
-          this.runtime.QCA.move_to_coord(this.x,this.y,this.z,args.DEGREES);
+
+        //  this.yielded = 0;
+
+          this.yaw += Number(args.DEGREES);
+
+          this.yielded_time_start = Date.now();
+          this.yielded_time_now = Date.now();
+
+          this.runtime.QCA.move_to_coord(this.x,this.y,this.z, Number(args.DEGREES));
           this.fack=1;
+        //  this.yielded++;
           util.yield();
+          return;
           }
           else if(this.fack != 2)
           {
-            this.noww = this.runtime.QCA.get_coord("W");
-            if(Math.abs(this.noww-this.yaw)<this.delta)
+
+            if ((this.yielded_time_now - this.yielded_time_start ) >= this.yielded_max_time){ //Нужно, чтобы избежать зависания блока.
+
+              this.fack=2;
+            //  this.yielded = 0;
+            }
+
+
+            this.noww = Number(this.runtime.QCA.get_coord("W"));
+            if(Math.abs(this.noww-this.yaw)<3)
             this.fack=2;
+          //  this.yielded++;
+            this.yielded_time_now = Date.now();
             util.yield();
+            return;
           }
           this.runtime.QCA.move_with_speed(0,0,0,this.z);
           this.fack=0;
