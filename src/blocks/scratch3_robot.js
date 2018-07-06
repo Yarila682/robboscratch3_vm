@@ -427,6 +427,7 @@ class Scratch3RobotBlocks {
 
     robot_set_motors_left_right_power_and_direction_separately(args, util){
 
+                      this.runtime.RCA.setRobotPower(0,0,0);
     this.power_in_percent_left  =   (args.POWER_LEFT > 100)?100:((args.POWER_LEFT < 0)?0:args.POWER_LEFT);
     this.power_in_percent_right =   (args.POWER_RIGHT > 100)?100:((args.POWER_RIGHT < 0)?0:args.POWER_RIGHT);
 
@@ -751,6 +752,7 @@ class Scratch3RobotBlocks {
 
     robot_set_motors_power(args, util){
 
+                      this.runtime.RCA.setRobotPower(0,0,0);
       let power = this.check_value_out_of_range(args.POWER,0,100);
 
         this.power_in_percent_left    =   power;
@@ -765,6 +767,7 @@ class Scratch3RobotBlocks {
 
     robot_set_motors_power_left_right_separately(args, util){
 
+                      this.runtime.RCA.setRobotPower(0,0,0);
       this.power_in_percent_left    =   this.check_value_out_of_range(args.POWER_LEFT,0,100);
       this.power_in_percent_right   =   this.check_value_out_of_range(args.POWER_RIGHT,0,100);
 
