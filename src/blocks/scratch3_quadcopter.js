@@ -19,7 +19,7 @@ class Scratch3QuadcopterBlocks {
           this.noww=0;
           this.dir = 0;//отвечает за движение при установленной команде copter_set_direction
           this.fack = 0;//отвечает за задержку и инициализацию при задержке
-          this.delta= 0.05; //0.05
+          this.delta= 0.01; //0.05
           this.speed= 1;
 
           this.yielded_time_start = Date.now(); //Счётчик задержки блока. При привышении yilded_max_time скипаем блок, чтобы избежать зависания системы.
