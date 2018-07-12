@@ -49,6 +49,7 @@ class Scratch3QuadcopterBlocks {
             copter_x_coord:this.copter_x_coord,
             copter_y_coord:this.copter_y_coord,
             copter_z_coord:this.copter_z_coord,
+            copter_yaw:this.copter_yaw,
             copter_fly_for_seconds_to_coords:this.copter_fly_for_seconds_to_coords,
             copter_fly_to_coords:this.copter_fly_to_coords,
             copter_rotate:this.copter_rotate,
@@ -396,9 +397,14 @@ this.SendCordInterval =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x
      return this.runtime.QCA.get_coord("Y");
     }
 
+    copter_yaw(args, util){
+     return this.runtime.QCA.get_coord("W");
+    }
+
     copter_z_coord(args, util){
      return this.runtime.QCA.get_coord("Z");
     }
+
 
     copter_fly_for_seconds_to_coords(args, util)
     {
