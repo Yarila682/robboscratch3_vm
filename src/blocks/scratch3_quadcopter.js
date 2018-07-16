@@ -96,7 +96,22 @@ class Scratch3QuadcopterBlocks {
 
       console.log(`copter_change_z_by: ${this.z}`);
       //this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
-    this.SendCordInterval =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);},100);
+    this.SendCordInterval =  setInterval(() =>{
+
+      if (this.runtime.QCA.isQuadcopterConnected()){
+
+            this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
+
+      }else{
+
+            clearInterval(this.SendCordInterval);  
+
+      }
+
+
+
+    },100);
+
     this.yielded_time_start = Date.now();
     this.yielded_time_now = Date.now();
 
