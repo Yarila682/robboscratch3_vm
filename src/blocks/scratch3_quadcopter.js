@@ -94,9 +94,11 @@ class Scratch3QuadcopterBlocks {
 
       this.z = this.z + 0.3;
 
-      console.log(`copter_change_z_by: ${this.z}`);
+      console.log(`copter_fly_up: ${this.z}`);
       //this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
     this.SendCordInterval =  setInterval(() =>{
+
+      //    console.log(`copter_fly_up: ${this.z}`);
 
       if (this.runtime.QCA.isQuadcopterConnected()){
 
@@ -104,7 +106,8 @@ class Scratch3QuadcopterBlocks {
 
       }else{
 
-            clearInterval(this.SendCordInterval);  
+            clearInterval(this.SendCordInterval);
+            this.fack=0
 
       }
 
@@ -179,7 +182,22 @@ this.runtime.QCA.copter_land();
           console.log(`HUUUUIY: ${this.y}`)
         this.yielded_time_start = Date.now();
         this.yielded_time_now = Date.now();
-        this.SendCordInterval =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);},100);
+        this.SendCordInterval =  setInterval(() =>{
+
+  if (this.runtime.QCA.isQuadcopterConnected()){
+
+        this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
+
+  }else{
+
+        clearInterval(this.SendCordInterval);
+        this.fack=0;
+
+  }
+
+
+
+},100);
 
       //this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
       this.fack=1;
@@ -282,7 +300,22 @@ clearInterval(this.SendCordInterval);
       this.yielded_time_now = Date.now();
 
       //this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
-      this.SendCordInterval =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);},100);
+      this.SendCordInterval =  setInterval(() =>{
+
+  if (this.runtime.QCA.isQuadcopterConnected()){
+
+        this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
+
+  }else{
+
+        clearInterval(this.SendCordInterval);
+this.fack=0;
+
+  }
+
+
+
+},100);
       this.fack = 1;
       //this.yielded++;
       util.yield();
@@ -327,7 +360,22 @@ clearInterval(this.SendCordInterval);
 
       this.yielded_time_start = Date.now();
       this.yielded_time_now = Date.now();
-      this.SendCordInterval =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);},100);
+      this.SendCordInterval =  setInterval(() =>{
+
+  if (this.runtime.QCA.isQuadcopterConnected()){
+
+        this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
+
+  }else{
+
+        clearInterval(this.SendCordInterval);
+this.fack=0;
+
+  }
+
+
+
+},100);
       //this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
       this.fack = 1;
       //this.yielded++;
@@ -371,7 +419,22 @@ clearInterval(this.SendCordInterval);
 
       console.log(`copter_change_z_by: ${this.z}`)
       //this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
-this.SendCordInterval =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);},100);
+this.SendCordInterval =  setInterval(() =>{
+
+  if (this.runtime.QCA.isQuadcopterConnected()){
+
+        this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
+
+  }else{
+
+        clearInterval(this.SendCordInterval);
+this.fack=0;
+
+  }
+
+
+
+},100);
     this.yielded_time_start = Date.now();
     this.yielded_time_now = Date.now();
 
@@ -460,7 +523,22 @@ this.SendCordInterval =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x
 
           this.yielded_time_start = Date.now();
           this.yielded_time_now = Date.now();
-    this.SendCordInterval =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);},100);
+    this.SendCordInterval =  setInterval(() =>{
+
+  if (this.runtime.QCA.isQuadcopterConnected()){
+
+        this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
+
+  }else{
+
+        clearInterval(this.SendCordInterval);
+this.fack=0;
+
+  }
+
+
+
+},100);
         //this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw); //TODO CHECK NUJEN LI YAW!
         this.fack=1;
       //  this.yielded++;
@@ -509,7 +587,22 @@ this.SendCordInterval =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x
 
           this.yielded_time_start = Date.now();
           this.yielded_time_now = Date.now();
-      this.SendCordInterval =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);},100);
+      this.SendCordInterval =  setInterval(() =>{
+
+  if (this.runtime.QCA.isQuadcopterConnected()){
+
+        this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
+
+  }else{
+
+        clearInterval(this.SendCordInterval);
+this.fack=0;
+
+  }
+
+
+
+},100);
       //    this.runtime.QCA.move_to_coord(this.x,this.y,this.z, this.yaw);
           this.fack=1;
         //  this.yielded++;
