@@ -151,7 +151,7 @@ class Scratch3QuadcopterBlocks {
 this.init_start_coordinates();
 this.CopterLANDING =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x,this.y,this.z,this.yaw);
   this.z-=0.1;
-  if(this.z<=0.02){
+  if(this.z<=0.1){
      clearInterval(this.CopterLANDING);
      this.runtime.QCA.move_to_coord(this.x,this.y,0,this.yaw)
     // this.runtime.QCA.move_with_speed(0,0,0,0);
@@ -160,6 +160,7 @@ this.CopterLANDING =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x,th
     /*BAD*/
     copter_stop(){
 this.runtime.QCA.copter_land();
+clearInterval(this.CopterLANDING);
     }
 
     /*BAD*/
