@@ -4,7 +4,7 @@ const Timer = require('../util/timer');
 //const Robot_command = require('../robot/robot_command');
 
 const MOTORS_ON_DELTA = 50;
-const DEGREE_RATIO = 3.2;
+const DEGREE_RATIO = 5.19;
 
 class Scratch3RobotBlocks {
     constructor (runtime) {
