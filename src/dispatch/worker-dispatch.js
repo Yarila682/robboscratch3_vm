@@ -61,6 +61,10 @@ class WorkerDispatch extends SharedDispatch {
         if (this.services.hasOwnProperty(service)) {
             log.warn(`Worker dispatch replacing existing service provider for ${service}`);
         }
+
+        // console.log("service: " + service);
+        // console.trace();
+
         this.services[service] = provider;
         return this.waitForConnection.then(() => this._remoteCall(self, 'dispatch', 'setService', service));
     }

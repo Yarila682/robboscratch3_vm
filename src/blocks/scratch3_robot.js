@@ -58,7 +58,9 @@ class Scratch3RobotBlocks {
             robot_turn_led_off:this.robot_turn_led_off,
             robot_claw_closed:this.robot_claw_closed,
             robot_claw_state:this.robot_claw_state,
-            robot_reset_trip_meters: this.robot_reset_trip_meters
+            robot_reset_trip_meters: this.robot_reset_trip_meters,
+            robot_get_rgb_sensor_data: this.robot_get_rgb_sensor_data,
+            robot_is_current_color:this.robot_is_current_color
 
 
         };
@@ -416,6 +418,32 @@ class Scratch3RobotBlocks {
 
           }
 
+
+    }
+
+    robot_is_current_color(args){
+
+       console.log(`robot_is_current_color   sensor: ${args.ROBOT_SENSORS_FOR_RGB} color: ${args.COLORS} `);
+
+       let sensor_id = Number(args.ROBOT_SENSORS_FOR_RGB.replace("sensor","")) - 1;
+
+       let color = args.COLORS;
+
+       let current_color = this.runtime.RCA.colorFilter(sensor_id,true);
+
+       if ((color == "unknown") && (Array.isArray(current_color))){
+
+          return true;
+
+       }else if (color == current_color){
+
+           return true;
+
+       }else{
+
+         return false;
+         
+       }
 
     }
 

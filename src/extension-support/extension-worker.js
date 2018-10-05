@@ -3,6 +3,7 @@
 const ArgumentType = require('../extension-support/argument-type');
 const BlockType = require('../extension-support/block-type');
 const dispatch = require('../dispatch/worker-dispatch');
+const TargetType = require('../extension-support/target-type');
 
 class ExtensionWorker {
     constructor () {
@@ -16,6 +17,9 @@ class ExtensionWorker {
                 this.workerId = id;
 
                 try {
+
+                    console.log("[ExtensionWorker] Trying to import script: " + extension);
+
                     importScripts(extension);
 
                     const initialRegistrations = this.initialRegistrations;
@@ -23,6 +27,9 @@ class ExtensionWorker {
 
                     Promise.all(initialRegistrations).then(() => dispatch.call('extensions', 'onWorkerInit', id));
                 } catch (e) {
+
+                   console.log("[ExtensionWorker] Error during importing script: " + e);
+
                     dispatch.call('extensions', 'onWorkerInit', id, e);
                 }
             });
@@ -47,6 +54,7 @@ class ExtensionWorker {
 global.Scratch = global.Scratch || {};
 global.Scratch.ArgumentType = ArgumentType;
 global.Scratch.BlockType = BlockType;
+global.Scratch.TargetType = TargetType;
 
 /**
  * Expose only specific parts of the worker to extensions.

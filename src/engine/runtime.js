@@ -5,9 +5,15 @@ const escapeHtml = require('escape-html');
 const ArgumentType = require('../extension-support/argument-type');
 const Blocks = require('./blocks');
 const BlockType = require('../extension-support/block-type');
-const Sequencer = require('./sequencer');
-const Thread = require('./thread');
 const Profiler = require('./profiler');
+const Sequencer = require('./sequencer');
+const ScratchBlocksConstants = require('./scratch-blocks-constants');
+const TargetType = require('../extension-support/target-type');
+const Thread = require('./thread');
+const log = require('../util/log');
+const maybeFormatMessage = require('../util/maybe-format-message');
+const StageLayering = require('./stage-layering');
+const Variable = require('./variable');
 
 // Virtual I/O devices.
 const Clock = require('../io/clock');
@@ -15,6 +21,11 @@ const DeviceManager = require('../io/deviceManager');
 const Keyboard = require('../io/keyboard');
 const Mouse = require('../io/mouse');
 const MouseWheel = require('../io/mouseWheel');
+const UserData = require('../io/userData');
+const Video = require('../io/video');
+
+const StringUtil = require('../util/string-util');
+const uid = require('../util/uid');
 
 const defaultBlockPackages = {
     scratch3_control: require('../blocks/scratch3_control'),
@@ -33,7 +44,7 @@ const defaultBlockPackages = {
 
 /**
  * Information used for converting Scratch argument types into scratch-blocks data.
- * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}}
+ * @type {object.<ArgumentType, {shadowType: string, fieldType: string}>}
  */
 const ArgumentTypeMap = (() => {
     const map = {};
@@ -55,33 +66,21 @@ const ArgumentTypeMap = (() => {
     map[ArgumentType.BOOLEAN] = {
         check: 'Boolean'
     };
+    map[ArgumentType.MATRIX] = {
+        shadowType: 'matrix',
+        fieldType: 'MATRIX'
+    };
     return map;
 })();
 
 /**
- * These constants are copied from scratch-blocks/core/constants.js
- * @TODO find a way to require() these... maybe make a scratch-blocks/dist/constants.js or something like that?
- * @readonly
- * @enum {int}
+ * Predefined "Converted block info" for a separator between blocks in a block category
+ * @type {ConvertedBlockInfo}
  */
-const ScratchBlocksConstants = {
-    /**
-     * ENUM for output shape: hexagonal (booleans/predicates).
-     * @const
-     */
-    OUTPUT_SHAPE_HEXAGONAL: 1,
-
-    /**
-     * ENUM for output shape: rounded (numbers).
-     * @const
-     */
-    OUTPUT_SHAPE_ROUND: 2,
-
-    /**
-     * ENUM for output shape: squared (any/all values; strings).
-     * @const
-     */
-    OUTPUT_SHAPE_SQUARE: 3
+const ConvertedSeparator = {
+    info: {},
+    json: null,
+    xml: '<sep gap="36"/>'
 };
 
 /**
@@ -107,14 +106,14 @@ let rendererDrawProfilerId = -1;
  * @constructor
  */
 class Runtime extends EventEmitter {
-    constructor (RCA,LCA,QCA) {
-        super();
+  constructor (RCA,LCA,QCA) {
+      super();
 
-        this.RCA = RCA;
+      this.RCA = RCA;
 
-        this.LCA = LCA;
+      this.LCA = LCA;
 
-        this.QCA = QCA;
+      this.QCA = QCA;
 
         /**
          * Target management and storage.
@@ -137,14 +136,14 @@ class Runtime extends EventEmitter {
          * These will execute on `_editingTarget.`
          * @type {!Blocks}
          */
-        this.flyoutBlocks = new Blocks();
+        this.flyoutBlocks = new Blocks(true /* force no glow */);
 
         /**
          * Storage container for monitor blocks.
          * These will execute on a target maybe
          * @type {!Blocks}
          */
-        this.monitorBlocks = new Blocks();
+        this.monitorBlocks = new Blocks(true /* force no glow */);
 
         /**
          * Currently known editing target for the VM.
@@ -269,8 +268,15 @@ class Runtime extends EventEmitter {
             deviceManager: new DeviceManager(),
             keyboard: new Keyboard(this),
             mouse: new Mouse(this),
-            mouseWheel: new MouseWheel(this)
+            mouseWheel: new MouseWheel(this),
+            userData: new UserData(),
+            video: new Video(this)
         };
+
+        /**
+         * A list of extensions, used to manage hardware connection.
+         */
+        this.peripheralExtensions = {};
 
         /**
          * A runtime profiler that records timed events for later playback to
@@ -326,6 +332,22 @@ class Runtime extends EventEmitter {
      */
     static get BLOCK_GLOW_OFF () {
         return 'BLOCK_GLOW_OFF';
+    }
+
+    /**
+     * Event name for turning on turbo mode.
+     * @const {string}
+     */
+    static get TURBO_MODE_ON () {
+        return 'TURBO_MODE_ON';
+    }
+
+    /**
+     * Event name for turning off turbo mode.
+     * @const {string}
+     */
+    static get TURBO_MODE_OFF () {
+        return 'TURBO_MODE_OFF';
     }
 
     /**
@@ -389,11 +411,59 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Event name for block drag update.
+     * @const {string}
+     */
+    static get BLOCK_DRAG_UPDATE () {
+        return 'BLOCK_DRAG_UPDATE';
+    }
+
+    /**
+     * Event name for block drag end.
+     * @const {string}
+     */
+    static get BLOCK_DRAG_END () {
+        return 'BLOCK_DRAG_END';
+    }
+
+    /**
      * Event name for reporting that an extension was added.
      * @const {string}
      */
     static get EXTENSION_ADDED () {
         return 'EXTENSION_ADDED';
+    }
+
+    /**
+     * Event name for updating the available set of peripheral devices.
+     * @const {string}
+     */
+    static get PERIPHERAL_LIST_UPDATE () {
+        return 'PERIPHERAL_LIST_UPDATE';
+    }
+
+    /**
+     * Event name for reporting that a peripheral has connected.
+     * @const {string}
+     */
+    static get PERIPHERAL_CONNECTED () {
+        return 'PERIPHERAL_CONNECTED';
+    }
+
+    /**
+     * Event name for reporting that a peripheral has encountered an error.
+     * @const {string}
+     */
+    static get PERIPHERAL_ERROR () {
+        return 'PERIPHERAL_ERROR';
+    }
+
+    /**
+     * Event name for reporting that a peripheral has not been discovered.
+     * @const {string}
+     */
+    static get PERIPHERAL_SCAN_TIMEOUT () {
+        return 'PERIPHERAL_SCAN_TIMEOUT';
     }
 
     /**
@@ -474,29 +544,75 @@ class Runtime extends EventEmitter {
      * @private
      */
     _makeExtensionMenuId (menuName, extensionId) {
-        return `${extensionId}.menu.${escapeHtml(menuName)}`;
+        return `${extensionId}_menu_${escapeHtml(menuName)}`;
+    }
+
+    /**
+     * Create a context ("args") object for use with `formatMessage` on messages which might be target-specific.
+     * @param {Target} [target] - the target to use as context. If a target is not provided, default to the current
+     * editing target or the stage.
+     */
+    makeMessageContextForTarget (target) {
+        const context = {};
+        target = target || this.getEditingTarget() || this.getTargetForStage();
+        if (target) {
+            context.targetType = (target.isStage ? TargetType.STAGE : TargetType.SPRITE);
+        }
     }
 
     /**
      * Register the primitives provided by an extension.
-     * @param {ExtensionInfo} extensionInfo - information about the extension (id, blocks, etc.)
+     * @param {ExtensionMetadata} extensionInfo - information about the extension (id, blocks, etc.)
      * @private
      */
     _registerExtensionPrimitives (extensionInfo) {
         const categoryInfo = {
             id: extensionInfo.id,
-            name: extensionInfo.name,
+            name: maybeFormatMessage(extensionInfo.name),
+            showStatusButton: extensionInfo.showStatusButton,
             blockIconURI: extensionInfo.blockIconURI,
             menuIconURI: extensionInfo.menuIconURI,
-            color1: '#FF6680',
-            color2: '#FF4D6A',
-            color3: '#FF3355',
+            color1: extensionInfo.colour || '#0FBD8C',
+            color2: extensionInfo.colourSecondary || '#0DA57A',
+            color3: extensionInfo.colourTertiary || '#0B8E69',
             blocks: [],
             menus: []
         };
 
         this._blockInfo.push(categoryInfo);
 
+        this._fillExtensionCategory(categoryInfo, extensionInfo);
+
+        this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks.concat(categoryInfo.menus));
+    }
+
+    /**
+     * Reregister the primitives for an extension
+     * @param  {ExtensionMetadata} extensionInfo - new info (results of running getInfo) for an extension
+     * @private
+     */
+    _refreshExtensionPrimitives (extensionInfo) {
+        let extensionBlocks = [];
+        for (const categoryInfo of this._blockInfo) {
+            if (extensionInfo.id === categoryInfo.id) {
+                categoryInfo.name = maybeFormatMessage(extensionInfo.name);
+                categoryInfo.blocks = [];
+                categoryInfo.menus = [];
+                this._fillExtensionCategory(categoryInfo, extensionInfo);
+                extensionBlocks = extensionBlocks.concat(categoryInfo.blocks, categoryInfo.menus);
+            }
+        }
+
+        this.emit(Runtime.BLOCKSINFO_UPDATE, extensionBlocks);
+    }
+
+    /**
+     * Read extension information, convert menus and blocks, and store the results in the provided category object.
+     * @param {CategoryInfo} categoryInfo - the category to be filled
+     * @param {ExtensionMetadata} extensionInfo - the extension metadata to read
+     * @private
+     */
+    _fillExtensionCategory (categoryInfo, extensionInfo) {
         for (const menuName in extensionInfo.menus) {
             if (extensionInfo.menus.hasOwnProperty(menuName)) {
                 const menuItems = extensionInfo.menus[menuName];
@@ -504,52 +620,29 @@ class Runtime extends EventEmitter {
                 categoryInfo.menus.push(convertedMenu);
             }
         }
+
         for (const blockInfo of extensionInfo.blocks) {
-            const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
-            const opcode = convertedBlock.json.type;
-            categoryInfo.blocks.push(convertedBlock);
-            this._primitives[opcode] = convertedBlock.info.func;
-            if (blockInfo.blockType === BlockType.HAT) {
-                this._hats[opcode] = {edgeActivated: true}; /** @TODO let extension specify this */
+            if (blockInfo === '---') {
+                categoryInfo.blocks.push(ConvertedSeparator);
+                continue;
             }
-        }
-
-        this.emit(Runtime.EXTENSION_ADDED, categoryInfo.blocks.concat(categoryInfo.menus));
-    }
-
-    /**
-     * Reregister the primitives for an extension
-     * @param  {ExtensionInfo} extensionInfo - new info (results of running getInfo)
-     *                                         for an extension
-     * @private
-     */
-    _refreshExtensionPrimitives (extensionInfo) {
-        let extensionBlocks = [];
-        for (const categoryInfo of this._blockInfo) {
-            if (extensionInfo.id === categoryInfo.id) {
-                categoryInfo.blocks = [];
-                categoryInfo.menus = [];
-                for (const menuName in extensionInfo.menus) {
-                    if (extensionInfo.menus.hasOwnProperty(menuName)) {
-                        const menuItems = extensionInfo.menus[menuName];
-                        const convertedMenu = this._buildMenuForScratchBlocks(menuName, menuItems, categoryInfo);
-                        categoryInfo.menus.push(convertedMenu);
-                    }
-                }
-                for (const blockInfo of extensionInfo.blocks) {
-                    const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
-                    const opcode = convertedBlock.json.type;
-                    categoryInfo.blocks.push(convertedBlock);
+            try {
+                const convertedBlock = this._convertForScratchBlocks(blockInfo, categoryInfo);
+                const opcode = convertedBlock.json.type;
+                categoryInfo.blocks.push(convertedBlock);
+                if (blockInfo.blockType !== BlockType.EVENT) {
                     this._primitives[opcode] = convertedBlock.info.func;
-                    if (blockInfo.blockType === BlockType.HAT) {
-                        this._hats[opcode] = {edgeActivated: true}; /** @TODO let extension specify this */
-                    }
                 }
-                extensionBlocks = extensionBlocks.concat(categoryInfo.blocks, categoryInfo.menus);
+                if (blockInfo.blockType === BlockType.EVENT || blockInfo.blockType === BlockType.HAT) {
+                    this._hats[opcode] = {
+                        edgeActivated: blockInfo.isEdgeActivated,
+                        restartExistingThreads: blockInfo.shouldRestartExistingThreads
+                    };
+                }
+            } catch (e) {
+                log.error('Error parsing block: ', {block: blockInfo, error: e});
             }
         }
-
-        this.emit(Runtime.BLOCKSINFO_UPDATE, extensionBlocks);
     }
 
     /**
@@ -562,22 +655,23 @@ class Runtime extends EventEmitter {
      */
     _buildMenuForScratchBlocks (menuName, menuItems, categoryInfo) {
         const menuId = this._makeExtensionMenuId(menuName, categoryInfo.id);
-
-        /** @TODO: support dynamic menus when 'menuItems' is a method name string (see extension spec) */
-        if (typeof menuItems === 'string') {
-            throw new Error(`Dynamic extension menus are not yet supported. Menu name: ${menuName}`);
+        let options = null;
+        if (typeof menuItems === 'function') {
+            options = menuItems;
+        } else {
+            const extensionMessageContext = this.makeMessageContextForTarget();
+            options = menuItems.map(item => {
+                const formattedItem = maybeFormatMessage(item, extensionMessageContext);
+                switch (typeof formattedItem) {
+                case 'string':
+                    return [formattedItem, formattedItem];
+                case 'object':
+                    return [maybeFormatMessage(item.text, extensionMessageContext), item.value];
+                default:
+                    throw new Error(`Can't interpret menu item: ${JSON.stringify(item)}`);
+                }
+            });
         }
-        const options = menuItems.map(item => {
-            switch (typeof item) {
-            case 'string':
-                return [item, item];
-            case 'object':
-                return [item.text, item.value];
-            default:
-                throw new Error(`Can't interpret menu item: ${item}`);
-            }
-        });
-
         return {
             json: {
                 message0: '%1',
@@ -600,14 +694,15 @@ class Runtime extends EventEmitter {
     }
 
     /**
-     * Convert BlockInfo into scratch-blocks JSON & XML, and generate a proxy function.
-     * @param {BlockInfo} blockInfo - the block to convert
+     * Convert ExtensionBlockMetadata into scratch-blocks JSON & XML, and generate a proxy function.
+     * @param {ExtensionBlockMetadata} blockInfo - the block to convert
      * @param {CategoryInfo} categoryInfo - the category for this block
-     * @returns {{info: BlockInfo, json: object, xml: string}} - the converted & original block information
+     * @returns {ConvertedBlockInfo} - the converted & original block information
      * @private
      */
     _convertForScratchBlocks (blockInfo, categoryInfo) {
-        const extendedOpcode = `${categoryInfo.id}.${blockInfo.opcode}`;
+        const extendedOpcode = `${categoryInfo.id}_${blockInfo.opcode}`;
+
         const blockJSON = {
             type: extendedOpcode,
             inputsInline: true,
@@ -615,85 +710,41 @@ class Runtime extends EventEmitter {
             colour: categoryInfo.color1,
             colourSecondary: categoryInfo.color2,
             colourTertiary: categoryInfo.color3,
-            args0: [],
             extensions: ['scratch_extension']
         };
-
-        const inputList = [];
-
-        // TODO: store this somewhere so that we can map args appropriately after translation.
-        // This maps an arg name to its relative position in the original (usually English) block text.
-        // When displaying a block in another language we'll need to run a `replace` action similar to the one below,
-        // but each `[ARG]` will need to be replaced with the number in this map instead of `args0.length`.
-        const argsMap = {};
-
-        blockJSON.message0 = '';
+        const context = {
+            // TODO: store this somewhere so that we can map args appropriately after translation.
+            // This maps an arg name to its relative position in the original (usually English) block text.
+            // When displaying a block in another language we'll need to run a `replace` action similar to the one
+            // below, but each `[ARG]` will need to be replaced with the number in this map.
+            argsMap: {},
+            blockJSON,
+            categoryInfo,
+            blockInfo,
+            inputList: []
+        };
 
         // If an icon for the extension exists, prepend it to each block, with a vertical separator.
-        if (categoryInfo.blockIconURI) {
+        // We can overspecify an icon for each block, but if no icon exists on a block, fall back to
+        // the category block icon.
+        const iconURI = blockInfo.blockIconURI || categoryInfo.blockIconURI;
+
+        if (iconURI) {
             blockJSON.message0 = '%1 %2';
             const iconJSON = {
                 type: 'field_image',
-                src: categoryInfo.blockIconURI,
+                src: iconURI,
                 width: 40,
                 height: 40
             };
             const separatorJSON = {
                 type: 'field_vertical_separator'
             };
-            blockJSON.args0.push(iconJSON);
-            blockJSON.args0.push(separatorJSON);
+            blockJSON.args0 = [
+                iconJSON,
+                separatorJSON
+            ];
         }
-
-        blockJSON.message0 += blockInfo.text.replace(/\[(.+?)]/g, (match, placeholder) => {
-            // Sanitize the placeholder to ensure valid XML
-            placeholder = placeholder.replace(/[<"&]/, '_');
-
-            const argJSON = {
-                type: 'input_value',
-                name: placeholder
-            };
-
-            const argInfo = blockInfo.arguments[placeholder] || {};
-            const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
-            const defaultValue = (typeof argInfo.defaultValue === 'undefined' ?
-                '' :
-                escapeHtml(argInfo.defaultValue.toString()));
-
-            if (argTypeInfo.check) {
-                argJSON.check = argTypeInfo.check;
-            }
-
-            const shadowType = (argInfo.menu ?
-                this._makeExtensionMenuId(argInfo.menu, categoryInfo.id) :
-                argTypeInfo.shadowType);
-            const fieldType = argInfo.menu || argTypeInfo.fieldType;
-
-            // <value> is the ScratchBlocks name for a block input.
-            inputList.push(`<value name="${placeholder}">`);
-
-            // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
-            // Boolean inputs don't need to specify a shadow in the XML.
-            if (shadowType) {
-                inputList.push(`<shadow type="${shadowType}">`);
-
-                // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
-                // text input and therefore don't need a field element.
-                if (fieldType) {
-                    inputList.push(`<field name="${fieldType}">${defaultValue}</field>`);
-                }
-
-                inputList.push('</shadow>');
-            }
-
-            inputList.push('</value>');
-
-            // scratch-blocks uses 1-based argument indexing
-            blockJSON.args0.push(argJSON);
-            const argNum = blockJSON.args0.length;
-            argsMap[placeholder] = argNum;
-            return `%${argNum}`;
-        });
 
         switch (blockInfo.blockType) {
         case BlockType.COMMAND:
@@ -712,35 +763,143 @@ class Runtime extends EventEmitter {
             blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_HEXAGONAL;
             break;
         case BlockType.HAT:
+        case BlockType.EVENT:
+            if (!blockInfo.hasOwnProperty('isEdgeActivated')) {
+                // if absent, this property defaults to true
+                blockInfo.isEdgeActivated = true;
+            }
             blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
             blockJSON.nextStatement = null; // null = available connection; undefined = terminal
             break;
         case BlockType.CONDITIONAL:
-            // Statement inputs get names like 'SUBSTACK', 'SUBSTACK2', 'SUBSTACK3', ...
-            for (let branchNum = 1; branchNum <= blockInfo.branchCount; ++branchNum) {
-                blockJSON[`message${branchNum}`] = '%1';
-                blockJSON[`args${branchNum}`] = [{
-                    type: 'input_statement',
-                    name: `SUBSTACK${branchNum > 1 ? branchNum : ''}`
-                }];
-            }
+        case BlockType.LOOP:
+            blockInfo.branchCount = blockInfo.branchCount || 1;
             blockJSON.outputShape = ScratchBlocksConstants.OUTPUT_SHAPE_SQUARE;
             blockJSON.previousStatement = null; // null = available connection; undefined = hat
-            blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+            if (!blockInfo.isTerminal) {
+                blockJSON.nextStatement = null; // null = available connection; undefined = terminal
+            }
             break;
         }
 
-        if (blockInfo.isTerminal) {
-            delete blockJSON.nextStatement;
+        const blockText = Array.isArray(blockInfo.text) ? blockInfo.text : [blockInfo.text];
+        let inTextNum = 0; // text for the next block "arm" is blockText[inTextNum]
+        let inBranchNum = 0; // how many branches have we placed into the JSON so far?
+        let outLineNum = 0; // used for scratch-blocks `message${outLineNum}` and `args${outLineNum}`
+        const convertPlaceholders = this._convertPlaceholders.bind(this, context);
+        const extensionMessageContext = this.makeMessageContextForTarget();
+
+        // alternate between a block "arm" with text on it and an open slot for a substack
+        while (inTextNum < blockText.length || inBranchNum < blockInfo.branchCount) {
+            if (inTextNum < blockText.length) {
+                context.outLineNum = outLineNum;
+                const lineText = maybeFormatMessage(blockText[inTextNum], extensionMessageContext);
+                const convertedText = lineText.replace(/\[(.+?)]/g, convertPlaceholders);
+                if (blockJSON[`message${outLineNum}`]) {
+                    blockJSON[`message${outLineNum}`] += convertedText;
+                } else {
+                    blockJSON[`message${outLineNum}`] = convertedText;
+                }
+                ++inTextNum;
+                ++outLineNum;
+            }
+            if (inBranchNum < blockInfo.branchCount) {
+                blockJSON[`message${outLineNum}`] = '%1';
+                blockJSON[`args${outLineNum}`] = [{
+                    type: 'input_statement',
+                    name: `SUBSTACK${inBranchNum > 0 ? inBranchNum + 1 : ''}`
+                }];
+                ++inBranchNum;
+                ++outLineNum;
+            }
         }
 
-        const blockXML = `<block type="${extendedOpcode}">${inputList.join('')}</block>`;
+        if (blockInfo.blockType === BlockType.REPORTER) {
+            if (!blockInfo.disableMonitor && context.inputList.length === 0) {
+                blockJSON.checkboxInFlyout = true;
+            }
+        } else if (blockInfo.blockType === BlockType.LOOP) {
+            // Add icon to the bottom right of a loop block
+            blockJSON[`lastDummyAlign${outLineNum}`] = 'RIGHT';
+            blockJSON[`message${outLineNum}`] = '%1';
+            blockJSON[`args${outLineNum}`] = [{
+                type: 'field_image',
+                src: './static/blocks-media/repeat.svg', // TODO: use a constant or make this configurable?
+                width: 24,
+                height: 24,
+                alt: '*',
+                flip_rtl: true
+            }];
+            ++outLineNum;
+        }
+
+        const blockXML = `<block type="${extendedOpcode}">${context.inputList.join('')}</block>`;
 
         return {
-            info: blockInfo,
-            json: blockJSON,
+            info: context.blockInfo,
+            json: context.blockJSON,
             xml: blockXML
         };
+    }
+
+    /**
+     * Helper for _convertForScratchBlocks which handles linearization of argument placeholders. Called as a callback
+     * from string#replace. In addition to the return value the JSON and XML items in the context will be filled.
+     * @param {object} context - information shared with _convertForScratchBlocks about the block, etc.
+     * @param {string} match - the overall string matched by the placeholder regex, including brackets: '[FOO]'.
+     * @param {string} placeholder - the name of the placeholder being matched: 'FOO'.
+     * @return {string} scratch-blocks placeholder for the argument: '%1'.
+     * @private
+     */
+    _convertPlaceholders (context, match, placeholder) {
+        // Sanitize the placeholder to ensure valid XML
+        placeholder = placeholder.replace(/[<"&]/, '_');
+
+        const argJSON = {
+            type: 'input_value',
+            name: placeholder
+        };
+
+        const argInfo = context.blockInfo.arguments[placeholder] || {};
+        const argTypeInfo = ArgumentTypeMap[argInfo.type] || {};
+        const defaultValue = (typeof argInfo.defaultValue === 'undefined' ?
+            '' :
+            escapeHtml(maybeFormatMessage(argInfo.defaultValue, this.makeMessageContextForTarget()).toString()));
+
+        if (argTypeInfo.check) {
+            argJSON.check = argTypeInfo.check;
+        }
+
+        const shadowType = (argInfo.menu ?
+            this._makeExtensionMenuId(argInfo.menu, context.categoryInfo.id) :
+            argTypeInfo.shadowType);
+        const fieldType = argInfo.menu || argTypeInfo.fieldType;
+
+        // <value> is the ScratchBlocks name for a block input.
+        context.inputList.push(`<value name="${placeholder}">`);
+
+        // The <shadow> is a placeholder for a reporter and is visible when there's no reporter in this input.
+        // Boolean inputs don't need to specify a shadow in the XML.
+        if (shadowType) {
+            context.inputList.push(`<shadow type="${shadowType}">`);
+
+            // <field> is a text field that the user can type into. Some shadows, like the color picker, don't allow
+            // text input and therefore don't need a field element.
+            if (fieldType) {
+                context.inputList.push(`<field name="${fieldType}">${defaultValue}</field>`);
+            }
+
+            context.inputList.push('</shadow>');
+        }
+
+        context.inputList.push('</value>');
+
+        const argsName = `args${context.outLineNum}`;
+        const blockArgs = (context.blockJSON[argsName] = context.blockJSON[argsName] || []);
+        blockArgs.push(argJSON);
+        const argNum = blockArgs.length;
+        context.argsMap[placeholder] = argNum;
+        return `%${argNum}`;
     }
 
     /**
@@ -764,7 +923,13 @@ class Runtime extends EventEmitter {
             const menuIconXML = menuIconURI ?
                 `iconURI="${menuIconURI}"` : '';
 
-            xmlParts.push(`<category name="${name}" ${colorXML} ${menuIconXML}>`);
+            let statusButtonXML = '';
+            if (categoryInfo.showStatusButton) {
+                statusButtonXML = 'showStatusButton="true"';
+            }
+
+            xmlParts.push(`<category name="${name}" id="${categoryInfo.id}"
+                ${statusButtonXML} ${colorXML} ${menuIconXML}>`);
             xmlParts.push.apply(xmlParts, paletteBlocks.map(block => block.xml));
             xmlParts.push('</category>');
         }
@@ -777,6 +942,60 @@ class Runtime extends EventEmitter {
     getBlocksJSON () {
         return this._blockInfo.reduce(
             (result, categoryInfo) => result.concat(categoryInfo.blocks.map(blockInfo => blockInfo.json)), []);
+    }
+
+    /**
+     * Register an extension that communications with a hardware peripheral by id,
+     * to have access to it and its peripheral functions in the future.
+     * @param {string} extensionId - the id of the extension.
+     * @param {object} extension - the extension to register.
+     */
+    registerPeripheralExtension (extensionId, extension) {
+        this.peripheralExtensions[extensionId] = extension;
+    }
+
+    /**
+     * Tell the specified extension to scan for a peripheral.
+     * @param {string} extensionId - the id of the extension.
+     */
+    scanForPeripheral (extensionId) {
+        if (this.peripheralExtensions[extensionId]) {
+            this.peripheralExtensions[extensionId].scan();
+        }
+    }
+
+    /**
+     * Connect to the extension's specified peripheral.
+     * @param {string} extensionId - the id of the extension.
+     * @param {number} peripheralId - the id of the peripheral.
+     */
+    connectPeripheral (extensionId, peripheralId) {
+        if (this.peripheralExtensions[extensionId]) {
+            this.peripheralExtensions[extensionId].connect(peripheralId);
+        }
+    }
+
+    /**
+     * Disconnect from the extension's connected peripheral.
+     * @param {string} extensionId - the id of the extension.
+     */
+    disconnectPeripheral (extensionId) {
+        if (this.peripheralExtensions[extensionId]) {
+            this.peripheralExtensions[extensionId].disconnect();
+        }
+    }
+
+    /**
+     * Returns whether the extension has a currently connected peripheral.
+     * @param {string} extensionId - the id of the extension.
+     * @return {boolean} - whether the extension has a connected peripheral.
+     */
+    getPeripheralIsConnected (extensionId) {
+        let isConnected = false;
+        if (this.peripheralExtensions[extensionId]) {
+            isConnected = this.peripheralExtensions[extensionId].isConnected();
+        }
+        return isConnected;
     }
 
     /**
@@ -840,6 +1059,24 @@ class Runtime extends EventEmitter {
      */
     attachRenderer (renderer) {
         this.renderer = renderer;
+        this.renderer.setLayerGroupOrdering(StageLayering.LAYER_GROUPS);
+    }
+
+    /**
+     * Set the svg adapter, which converts scratch 2 svgs to scratch 3 svgs
+     * @param {!SvgRenderer} svgAdapter The adapter to attach
+     */
+    attachV2SVGAdapter (svgAdapter) {
+        this.v2SvgAdapter = svgAdapter;
+    }
+
+    /**
+     * Set the bitmap adapter for the VM/runtime, which converts scratch 2
+     * bitmaps to scratch 3 bitmaps. (Scratch 3 bitmaps are all bitmap resolution 2)
+     * @param {!function} bitmapAdapter The adapter to attach
+     */
+    attachV2BitmapAdapter (bitmapAdapter) {
+        this.v2BitmapAdapter = bitmapAdapter;
     }
 
     /**
@@ -872,6 +1109,9 @@ class Runtime extends EventEmitter {
         thread.target = target;
         thread.stackClick = opts.stackClick;
         thread.updateMonitor = opts.updateMonitor;
+        thread.blockContainer = opts.updateMonitor ?
+            this.monitorBlocks :
+            target.blocks;
 
         thread.pushStack(id);
         this.threads.push(thread);
@@ -901,6 +1141,7 @@ class Runtime extends EventEmitter {
         newThread.target = thread.target;
         newThread.stackClick = thread.stackClick;
         newThread.updateMonitor = thread.updateMonitor;
+        newThread.blockContainer = thread.blockContainer;
         newThread.pushStack(thread.topBlock);
         const i = this.threads.indexOf(thread);
         if (i > -1) {
@@ -922,6 +1163,19 @@ class Runtime extends EventEmitter {
                 thread.stack.length > 0 &&
                 thread.status !== Thread.STATUS_DONE) &&
             this.threads.indexOf(thread) > -1);
+    }
+
+    /**
+     * Return whether a thread is waiting for more information or done.
+     * @param {?Thread} thread Thread object to check.
+     * @return {boolean} True if the thread is waiting
+     */
+    isWaitingThread (thread) {
+        return (
+            thread.status === Thread.STATUS_PROMISE_WAIT ||
+            thread.status === Thread.STATUS_YIELD_TICK ||
+            !this.isActiveThread(thread)
+        );
     }
 
     /**
@@ -1097,6 +1351,8 @@ class Runtime extends EventEmitter {
     dispose () {
         this.stopAll();
         this.targets.map(this.disposeTarget, this);
+        this._monitorState = OrderedMap({});
+        // @todo clear out extensions? turboMode? etc.
     }
 
     /**
@@ -1305,7 +1561,7 @@ class Runtime extends EventEmitter {
             const target = thread.target;
             if (target === this._editingTarget) {
                 const blockForThread = thread.blockGlowInFrame;
-                if (thread.requestScriptGlowInFrame) {
+                if (thread.requestScriptGlowInFrame || thread.stackClick) {
                     let script = target.blocks.getTopLevelScript(blockForThread);
                     if (!script) {
                         // Attempt to find in flyout blocks.
@@ -1397,6 +1653,22 @@ class Runtime extends EventEmitter {
     }
 
     /**
+     * Emit whether blocks are being dragged over gui
+     * @param {boolean} areBlocksOverGui True if blocks are dragged out of blocks workspace, false otherwise
+     */
+    emitBlockDragUpdate (areBlocksOverGui) {
+        this.emit(Runtime.BLOCK_DRAG_UPDATE, areBlocksOverGui);
+    }
+
+    /**
+     * Emit event to indicate that the block drag has ended with the blocks outside the blocks workspace
+     * @param {Array.<object>} blocks The set of blocks dragged to the GUI
+     */
+    emitBlockEndDrag (blocks) {
+        this.emit(Runtime.BLOCK_DRAG_END, blocks);
+    }
+
+    /**
      * Emit value for reporter to show in the blocks.
      * @param {string} blockId ID for the block.
      * @param {string} value Value to show associated with the block.
@@ -1407,26 +1679,38 @@ class Runtime extends EventEmitter {
 
     /**
      * Add a monitor to the state. If the monitor already exists in the state,
-     * overwrites it.
+     * updates those properties that are defined in the given monitor record.
      * @param {!MonitorRecord} monitor Monitor to add.
      */
     requestAddMonitor (monitor) {
-        this._monitorState = this._monitorState.set(monitor.get('id'), monitor);
+        const id = monitor.get('id');
+        if (!this.requestUpdateMonitor(monitor)) { // update monitor if it exists in the state
+            // if the monitor did not exist in the state, add it
+            this._monitorState = this._monitorState.set(id, monitor);
+        }
     }
 
     /**
-     * Update a monitor in the state. Does nothing if the monitor does not already
-     * exist in the state.
+     * Update a monitor in the state and report success/failure of update.
      * @param {!Map} monitor Monitor values to update. Values on the monitor with overwrite
      *     values on the old monitor with the same ID. If a value isn't defined on the new monitor,
      *     the old monitor will keep its old value.
+     * @return {boolean} true if monitor exists in the state and was updated, false if it did not exist.
      */
     requestUpdateMonitor (monitor) {
         const id = monitor.get('id');
         if (this._monitorState.has(id)) {
             this._monitorState =
-                this._monitorState.set(id, this._monitorState.get(id).merge(monitor));
+                // Use mergeWith here to prevent undefined values from overwriting existing ones
+                this._monitorState.set(id, this._monitorState.get(id).mergeWith((prev, next) => {
+                    if (typeof next === 'undefined' || next === null) {
+                        return prev;
+                    }
+                    return next;
+                }, monitor));
+            return true;
         }
+        return false;
     }
 
     /**
@@ -1436,6 +1720,31 @@ class Runtime extends EventEmitter {
      */
     requestRemoveMonitor (monitorId) {
         this._monitorState = this._monitorState.delete(monitorId);
+    }
+
+    /**
+     * Hides a monitor and returns success/failure of action.
+     * @param {!string} monitorId ID of the monitor to hide.
+     * @return {boolean} true if monitor exists and was updated, false otherwise
+     */
+    requestHideMonitor (monitorId) {
+        return this.requestUpdateMonitor(new Map([
+            ['id', monitorId],
+            ['visible', false]
+        ]));
+    }
+
+    /**
+     * Shows a monitor and returns success/failure of action.
+     * not exist in the state.
+     * @param {!string} monitorId ID of the monitor to show.
+     * @return {boolean} true if monitor exists and was updated, false otherwise
+     */
+    requestShowMonitor (monitorId) {
+        return this.requestUpdateMonitor(new Map([
+            ['id', monitorId],
+            ['visible', true]
+        ]));
     }
 
     /**
@@ -1544,6 +1853,59 @@ class Runtime extends EventEmitter {
      */
     getEditingTarget () {
         return this._editingTarget;
+    }
+
+    getAllVarNamesOfType (varType) {
+        let varNames = [];
+        for (const target of this.targets) {
+            const targetVarNames = target.getAllVariableNamesInScopeByType(varType, true);
+            varNames = varNames.concat(targetVarNames);
+        }
+        return varNames;
+    }
+
+    /**
+     * Get the label or label function for an opcode
+     * @param {string} extendedOpcode - the opcode you want a label for
+     * @return {object} - object with label and category
+     * @property {string} category - the category for this opcode
+     * @property {Function} [labelFn] - function to generate the label for this opcode
+     * @property {string} [label] - the label for this opcode if `labelFn` is absent
+     */
+    getLabelForOpcode (extendedOpcode) {
+        const [category, opcode] = StringUtil.splitFirst(extendedOpcode, '_');
+        if (!(category && opcode)) return;
+
+        const categoryInfo = this._blockInfo.find(ci => ci.id === category);
+        if (!categoryInfo) return;
+
+        const block = categoryInfo.blocks.find(b => b.info.opcode === opcode);
+        if (!block) return;
+
+        // TODO: should this use some other category? Also, we may want to format the label in a locale-specific way.
+        return {
+            category: 'data',
+            label: `${categoryInfo.name}: ${block.info.text}`
+        };
+    }
+
+    /**
+     * Create a new global variable avoiding conflicts with other variable names.
+     * @param {string} variableName The desired variable name for the new global variable.
+     * This can be turned into a fresh name as necessary.
+     * @param {string} optVarId An optional ID to use for the variable. A new one will be generated
+     * if a falsey value for this parameter is provided.
+     * @param {string} optVarType The type of the variable to create. Defaults to Variable.SCALAR_TYPE.
+     * @return {Variable} The new variable that was created.
+     */
+    createNewGlobalVariable (variableName, optVarId, optVarType) {
+        const varType = (typeof optVarType === 'string') ? optVarType : Variable.SCALAR_TYPE;
+        const allVariableNames = this.getAllVarNamesOfType(varType);
+        const newName = StringUtil.unusedName(variableName, allVariableNames);
+        const variable = new Variable(optVarId || uid(), newName, varType);
+        const stage = this.getTargetForStage();
+        stage.variables[variable.id] = variable;
+        return variable;
     }
 
     /**

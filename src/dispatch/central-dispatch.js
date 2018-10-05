@@ -48,6 +48,10 @@ class CentralDispatch extends SharedDispatch {
             if (this.services.hasOwnProperty(service)) {
                 log.warn(`Central dispatch replacing existing service provider for ${service}`);
             }
+
+            // console.log("service: " + service);
+            // console.trace();
+
             this.services[service] = provider;
             return Promise.resolve();
         } catch (e) {
@@ -83,7 +87,7 @@ class CentralDispatch extends SharedDispatch {
         const provider = this.services[service];
         return provider && {
             provider,
-            isRemote: provider instanceof this.workerClass
+            isRemote: Boolean(this.workerClass && provider instanceof this.workerClass)
         };
     }
 

@@ -1,5 +1,8 @@
 const test = require('tap').test;
 const Blocks = require('../../src/engine/blocks');
+const Variable = require('../../src/engine/variable');
+const adapter = require('../../src/engine/adapter');
+const events = require('../fixtures/events.json');
 
 test('spec', t => {
     const b = new Blocks();
@@ -744,5 +747,64 @@ test('updateAssetName doesn\'t update name if name isn\'t being used', t => {
     t.equals(b.getBlock('id1').fields.BACKDROP.value, 'foo');
     b.updateAssetName('name1', 'name2', 'backdrop');
     t.equals(b.getBlock('id1').fields.BACKDROP.value, 'foo');
+    t.end();
+});
+
+test('updateTargetSpecificBlocks changes sprite clicked hat to stage clicked for stage', t => {
+    const b = new Blocks();
+    b.createBlock({
+        id: 'originallySpriteClicked',
+        opcode: 'event_whenthisspriteclicked'
+    });
+    b.createBlock({
+        id: 'originallyStageClicked',
+        opcode: 'event_whenstageclicked'
+    });
+
+    // originallySpriteClicked does not update when on a non-stage target
+    b.updateTargetSpecificBlocks(false /* isStage */);
+    t.equals(b.getBlock('originallySpriteClicked').opcode, 'event_whenthisspriteclicked');
+
+    // originallySpriteClicked does update when on a stage target
+    b.updateTargetSpecificBlocks(true /* isStage */);
+    t.equals(b.getBlock('originallySpriteClicked').opcode, 'event_whenstageclicked');
+
+    // originallyStageClicked does not update when on a stage target
+    b.updateTargetSpecificBlocks(true /* isStage */);
+    t.equals(b.getBlock('originallyStageClicked').opcode, 'event_whenstageclicked');
+
+    // originallyStageClicked does update when on a non-stage target
+    b.updateTargetSpecificBlocks(false/* isStage */);
+    t.equals(b.getBlock('originallyStageClicked').opcode, 'event_whenthisspriteclicked');
+
+    t.end();
+});
+
+test('getAllVariableAndListReferences returns an empty map references when variable blocks do not exist', t => {
+    const b = new Blocks();
+    t.equal(Object.keys(b.getAllVariableAndListReferences()).length, 0);
+    t.end();
+});
+
+test('getAllVariableAndListReferences returns references when variable blocks exist', t => {
+    const b = new Blocks();
+
+    let varListRefs = b.getAllVariableAndListReferences();
+    t.equal(Object.keys(varListRefs).length, 0);
+
+    b.createBlock(adapter(events.mockVariableBlock)[0]);
+    b.createBlock(adapter(events.mockListBlock)[0]);
+
+    varListRefs = b.getAllVariableAndListReferences();
+    t.equal(Object.keys(varListRefs).length, 2);
+    t.equal(Array.isArray(varListRefs['mock var id']), true);
+    t.equal(varListRefs['mock var id'].length, 1);
+    t.equal(varListRefs['mock var id'][0].type, Variable.SCALAR_TYPE);
+    t.equal(varListRefs['mock var id'][0].referencingField.value, 'a mock variable');
+    t.equal(Array.isArray(varListRefs['mock list id']), true);
+    t.equal(varListRefs['mock list id'].length, 1);
+    t.equal(varListRefs['mock list id'][0].type, Variable.LIST_TYPE);
+    t.equal(varListRefs['mock list id'][0].referencingField.value, 'a mock list');
+
     t.end();
 });

@@ -4,6 +4,9 @@ const Runtime = require('../../src/engine/runtime');
 const util = {
     target: {
         currentCostume: 0, // Internally, current costume is 0 indexed
+        getCostumes: function () {
+            return this.sprite.costumes;
+        },
         sprite: {
             costumes: [
                 {name: 'first name'},
@@ -31,8 +34,8 @@ test('getCostumeNumberName returns 1-indexed costume number', t => {
 test('getCostumeNumberName can return costume name', t => {
     util.target.currentCostume = 0; // This is 0-indexed.
     const args = {NUMBER_NAME: 'name'};
-    const number = blocks.getCostumeNumberName(args, util);
-    t.strictEqual(number, 'first name');
+    const name = blocks.getCostumeNumberName(args, util);
+    t.strictEqual(name, 'first name');
     t.end();
 });
 
