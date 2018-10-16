@@ -203,19 +203,19 @@ class Scratch3RobotBlocks {
 
 
 
-      console.log(`this.runtime.RCA.robot_motors_on(${power_left},${power_right})  Time: ${Date.now() - this.time}`);
+    //  console.log(`this.runtime.RCA.robot_motors_on(${power_left},${power_right})  Time: ${Date.now() - this.time}`);
 
         this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
 
     this.motors_on_interval =   setInterval(function(runtime,self){
 
-        console.log(`Motors on interval1`);
+    //    console.log(`Motors on interval1`);
 
       if (!self.need_to_stop){
 
         if (self.motors_on_loop_need){
 
-          console.log(`Motors on interval2 Time: ${Date.now() - self.time}`);
+      //    console.log(`Motors on interval2 Time: ${Date.now() - self.time}`);
           runtime.RCA.setRobotPower(self.power_left,self.power_right,0);
 
         }
@@ -312,7 +312,7 @@ class Scratch3RobotBlocks {
 
     robot_set_direction_to(args, util){
 
-          console.log(`robot_set_direction_to`);
+        //  console.log(`robot_set_direction_to`);
 
           this.robot_direction = args.ROBOT_DIRECTION;
 
@@ -324,7 +324,7 @@ class Scratch3RobotBlocks {
 
     robot_get_sensor_data(args, util){
 
-          console.log(`robot_get_sensor_data`);
+      //    console.log(`robot_get_sensor_data`);
 
           var sensor = args.ROBOT_SENSORS;
           var sensor_data = null;
@@ -386,7 +386,7 @@ class Scratch3RobotBlocks {
 
     robot_get_rgb_sensor_data(args){
 
-          console.log(`robot_get_rgb_sensor_data   sensor: ${args.ROBOT_SENSORS_FOR_RGB} color: ${args.RGB_VALUES} `);
+      //    console.log(`robot_get_rgb_sensor_data   sensor: ${args.ROBOT_SENSORS_FOR_RGB} color: ${args.RGB_VALUES} `);
 
           let sensor_id = Number(args.ROBOT_SENSORS_FOR_RGB.replace("sensor","")) - 1;
 
@@ -442,7 +442,7 @@ class Scratch3RobotBlocks {
        }else{
 
          return false;
-         
+
        }
 
     }
