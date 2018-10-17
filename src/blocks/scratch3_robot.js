@@ -34,6 +34,20 @@ class Scratch3RobotBlocks {
 
         this.robot_motors_on_for_seconds_timeout = null;
         this.robot_motors_on_for_seconds_timeout_stop = null;
+
+        this.runtime.RCA.registerRobotIsScratchduinoCallback(() => {
+
+          this.power_left =  63;
+          this.power_right =  63;
+
+        });
+
+        this.runtime.RCA.registerRobotIsRobboCallback(() => {
+
+          this.power_left  =  Math.round(this.power_in_percent_left * 0.63);
+          this.power_right =  Math.round(this.power_in_percent_right * 0.63);
+
+        });
     }
 
     /**
