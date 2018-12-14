@@ -38,7 +38,8 @@ const CORE_EXTENSIONS = [
     'copter', //modified_by_Yaroslav
     'robot',
     'laboratory',
-    'lab'
+    'lab',
+    'otto'
 ];
 
 // Adjust script coordinates to account for

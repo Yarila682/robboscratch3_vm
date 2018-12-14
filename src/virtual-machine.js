@@ -47,7 +47,7 @@ const CORE_EXTENSIONS = [
 class VirtualMachine extends EventEmitter {
     constructor () {
         super();
-
+      this.worker = new Worker('SomeDurtyWork.js');
       this.RCA = new RobotControlAPI(); //modified_by_Yaroslav //not original
       this.LCA = new LaboratoryControlAPI(); //modified_by_Yaroslav //not original
       this.QCA = new QuadcopterControlAPI(); //modified_by_Yaroslav //not original
@@ -336,7 +336,7 @@ class VirtualMachine extends EventEmitter {
     /**
      * @returns {string} Project in a Scratch 3.0 JSON representation.
      */
-    saveProjectSb3 () {
+     saveProjectSb3 () {
         const soundDescs = serializeSounds(this.runtime);
         const costumeDescs = serializeCostumes(this.runtime);
         const projectJson = this.toJSON();
@@ -357,13 +357,39 @@ class VirtualMachine extends EventEmitter {
             }
         });
     }
+    saveProjectSb3_auto () {
+        const soundDescs = serializeSounds(this.runtime);
+        const costumeDescs = serializeCostumes(this.runtime);
+        const projectJson = this.toJSON();
 
-    _addFileDescsToZip (fileDescs, zip) {
-        for (let i = 0; i < fileDescs.length; i++) {
-            const currFileDesc = fileDescs[i];
-            zip.file(currFileDesc.fileName, currFileDesc.fileContent);
-        }
+        // TODO want to eventually move zip creation out of here, and perhaps
+        // into scratch-storage
+        var infa = {};
+        infa.projectJson=projectJson;
+        infa.costumeDescs=costumeDescs;
+        infa.soundDescs=soundDescs;
+        this.worker.postMessage(infa); // Start worker without a message.
+      /*  const zip = new JSZip();
+
+        // Put everything in a zip file
+        zip.file('project.json', projectJson);
+        this._addFileDescsToZip(soundDescs.concat(costumeDescs), zip);
+
+        return zip.generateAsync({
+            type: 'blob',
+            compression: 'DEFLATE',
+            compressionOptions: {
+                level: 6 // Tradeoff between best speed (1) and best compression (9)
+            }
+        });*/
     }
+
+     _addFileDescsToZip (fileDescs, zip) {
+         for (let i = 0; i < fileDescs.length; i++) {
+             const currFileDesc = fileDescs[i];
+             zip.file(currFileDesc.fileName, currFileDesc.fileContent);
+         }
+     }
 
     /**
      * Exports a sprite in the sprite3 format.
