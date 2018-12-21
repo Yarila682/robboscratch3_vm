@@ -36,6 +36,9 @@ class Scratch3DataBlocks {
     }
 
     getVariable (args, util) {
+
+      //  console.log(`getVariable name: ${args.VARIABLE.name} id: ${args.VARIABLE.id}`); //modified_by_Yaroslav
+
         const variable = util.target.lookupOrCreateVariable(
             args.VARIABLE.id, args.VARIABLE.name);
         return variable.value;
