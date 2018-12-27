@@ -141,7 +141,7 @@ class Scratch3RobotBlocks {
 
               if (timeElapsed % 200 == 0){
 
-                      console.log(`robot_motors_on_for_seconds power_left: ${this.power_left} power_right: ${this.power_right} timeElapsed: ${timeElapsed} duration:${ util.stackFrame.duration * 1000} `);
+                  //    console.log(`robot_motors_on_for_seconds power_left: ${this.power_left} power_right: ${this.power_right} timeElapsed: ${timeElapsed} duration:${ util.stackFrame.duration * 1000} `);
 
                       this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
 
@@ -174,7 +174,7 @@ class Scratch3RobotBlocks {
 
             this.robot_motors_on_for_seconds_timeout_stop =   setTimeout(function(runtime){
 
-               console.log(`Robot stop!`);
+          //     console.log(`Robot stop!`);
                runtime.RCA.setRobotPower(0,0,0);
              },util.stackFrame.duration*1000,this.runtime);
 
@@ -249,7 +249,7 @@ class Scratch3RobotBlocks {
 
     robot_motors_off(args, util){
 
-      console.log(`Robot stop!`);
+  //    console.log(`Robot stop!`);
 
   // setTimeout(function(runtime,self){
   //
@@ -437,7 +437,7 @@ class Scratch3RobotBlocks {
 
     robot_is_current_color(args){
 
-       console.log(`robot_is_current_color   sensor: ${args.ROBOT_SENSORS_FOR_RGB} color: ${args.COLORS} `);
+    //   console.log(`robot_is_current_color   sensor: ${args.ROBOT_SENSORS_FOR_RGB} color: ${args.COLORS} `);
 
        let sensor_id = Number(args.ROBOT_SENSORS_FOR_RGB.replace("sensor","")) - 1;
 
@@ -591,14 +591,14 @@ class Scratch3RobotBlocks {
 
         if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps) && (!this.need_to_stop) ) {  // TODO: сделать корректную проверку для робота без энкодеров
 
-            console.log(`robot_motors_on_for_steps stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+      //      console.log(`robot_motors_on_for_steps stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
             util.yield();
 
           } else{
 
 
-                console.log(`robot_motors_on_for_steps  exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+        //        console.log(`robot_motors_on_for_steps  exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
                 util.stackFrame.steps = null;
 
@@ -667,7 +667,7 @@ class Scratch3RobotBlocks {
 
       if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps)  && (!this.need_to_stop) ) { // TODO: сделать корректную проверку для робота без энкодеров
 
-            console.log(`robot_turnright stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+      //      console.log(`robot_turnright stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
 
         //  util.stackFrame.steps_counter++;
@@ -676,7 +676,7 @@ class Scratch3RobotBlocks {
 
         } else{
 
-              console.log(`robot_turnright exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+          //    console.log(`robot_turnright exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
               util.stackFrame.steps = null;
 
@@ -745,7 +745,7 @@ class Scratch3RobotBlocks {
 
             if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps)  && (!this.need_to_stop) ) { // TODO: сделать корректную проверку для робота без энкодеров
 
-                  console.log(`robot_turnleft stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+            //      console.log(`robot_turnleft stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
 
               //  util.stackFrame.steps_counter++;
@@ -754,7 +754,7 @@ class Scratch3RobotBlocks {
 
               } else{
 
-                    console.log(`robot_turnleft exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+              //      console.log(`robot_turnleft exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
                     util.stackFrame.steps = null;
 
@@ -800,7 +800,7 @@ class Scratch3RobotBlocks {
         this.power_in_percent_left    =   power;
         this.power_in_percent_right   =   power;
 
-      console.log(`robot_set_motors_power power_in_percent_left: ${this.power_in_percent_left} power_in_percent_right: ${this.power_in_percent_right}`);
+    //  console.log(`robot_set_motors_power power_in_percent_left: ${this.power_in_percent_left} power_in_percent_right: ${this.power_in_percent_right}`);
 
         this.update_power_using_direction(this.robot_direction);
 
@@ -813,7 +813,7 @@ class Scratch3RobotBlocks {
       this.power_in_percent_left    =   this.check_value_out_of_range(args.POWER_LEFT,0,100);
       this.power_in_percent_right   =   this.check_value_out_of_range(args.POWER_RIGHT,0,100);
 
-      console.log(`robot_set_motors_power_left_right_separately power_in_percent_left: ${this.power_in_percent_left} power_in_percent_right: ${this.power_in_percent_right}`);
+    //  console.log(`robot_set_motors_power_left_right_separately power_in_percent_left: ${this.power_in_percent_left} power_in_percent_right: ${this.power_in_percent_right}`);
 
       this.update_power_using_direction(this.robot_direction);
 
@@ -828,7 +828,7 @@ class Scratch3RobotBlocks {
 
     robot_turn_led_on(args, util){
 
-       console.log(`robot_turn_led_on led_position: ${args.ROBOT_POSITION}`);
+    //   console.log(`robot_turn_led_on led_position: ${args.ROBOT_POSITION}`);
 
        switch (args.ROBOT_POSITION) {
 
@@ -870,7 +870,7 @@ class Scratch3RobotBlocks {
 
     robot_turn_led_off(args, util){
 
-      console.log(`robot_turn_led_off led_position: ${args.ROBOT_POSITION}`);
+    //  console.log(`robot_turn_led_off led_position: ${args.ROBOT_POSITION}`);
 
       switch (args.ROBOT_POSITION) {
 
@@ -913,7 +913,7 @@ class Scratch3RobotBlocks {
 
     robot_reset_trip_meters(args, util){
 
-      console.log(`robot_reset_trip_meters`);
+  //    console.log(`robot_reset_trip_meters`);
 
       this.runtime.RCA.resetTripMeters();
 
@@ -921,7 +921,7 @@ class Scratch3RobotBlocks {
 
     robot_claw_closed(args, util){
 
-      console.log(`robot_claw_closed degrees: ${args.CLAW_CLOSED_PERCENT}`);
+  //    console.log(`robot_claw_closed degrees: ${args.CLAW_CLOSED_PERCENT}`);
 
         var degrees = this.check_value_out_of_range(args.CLAW_CLOSED_PERCENT,0,100);
 
@@ -931,7 +931,7 @@ class Scratch3RobotBlocks {
 
     robot_claw_state(args, util){
 
-        console.log(`robot_claw_state state: ${args.CLAW_STATES}`);
+    //    console.log(`robot_claw_state state: ${args.CLAW_STATES}`);
 
         switch (args.CLAW_STATES) {
 

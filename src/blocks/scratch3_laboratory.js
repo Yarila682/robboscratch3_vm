@@ -58,7 +58,7 @@ class Scratch3LaboratoryBlocks {
             {
               this.first_coming1 = false;
               setTimeout(()=>{this.timer_dlya_blocka1 = true;},TIME_DLYA_DEISTVIYA);
-        console.log(`lab_turn_led_on led_position: ${args.LED_NUMS}`);
+      //  console.log(`lab_turn_led_on led_position: ${args.LED_NUMS}`);
 
         switch (args.LED_NUMS) {
 
@@ -132,7 +132,7 @@ class Scratch3LaboratoryBlocks {
           this.first_coming2 = false;
           setTimeout(()=>{this.timer_dlya_blocka2 = true;},TIME_DLYA_DEISTVIYA);
 
-        console.log(`lab_turn_led_off led_position: ${args.LED_NUMS}`);
+    //    console.log(`lab_turn_led_off led_position: ${args.LED_NUMS}`);
 
         switch (args.LED_NUMS) {
 
@@ -204,7 +204,7 @@ class Scratch3LaboratoryBlocks {
         {
           this.first_coming3 = false;
           setTimeout(()=>{this.timer_dlya_blocka3 = true;},TIME_DLYA_DEISTVIYA);
-            console.log(`lab_color_led_turn_on led: ${args.LED_COLORS}`);
+          //  console.log(`lab_color_led_turn_on led: ${args.LED_COLORS}`);
 
               this.runtime.LCA.turnColorLedOn(args.LED_COLORS,0);
               util.yield();
@@ -225,7 +225,7 @@ class Scratch3LaboratoryBlocks {
         {
           this.first_coming4 = false;
           setTimeout(()=>{this.timer_dlya_blocka4 = true;},TIME_DLYA_DEISTVIYA);
-            console.log(`lab_color_led_turn_off led: ${args.LED_COLORS}`);
+          //  console.log(`lab_color_led_turn_off led: ${args.LED_COLORS}`);
 
             this.runtime.LCA.turnColorLedOff(args.LED_COLORS,0);
             util.yield();
@@ -245,7 +245,7 @@ class Scratch3LaboratoryBlocks {
         {
           this.first_coming5 = false;
           setTimeout(()=>{this.timer_dlya_blocka5 = true;},TIME_DLYA_DEISTVIYA);
-          console.log(`lab_digital_pin_set_on_off pin: ${args.LAB_DIGITAL_PIN} pin_state: ${args.LAB_DIGITAL_PIN_STATE} `);
+        //  console.log(`lab_digital_pin_set_on_off pin: ${args.LAB_DIGITAL_PIN} pin_state: ${args.LAB_DIGITAL_PIN_STATE} `);
 
             this.runtime.LCA.setDigitalOnOff(args.LAB_DIGITAL_PIN,args.LAB_DIGITAL_PIN_STATE,0);
             util.yield();
@@ -266,7 +266,7 @@ class Scratch3LaboratoryBlocks {
         {
           this.first_coming6 = false;
           setTimeout(()=>{this.timer_dlya_blocka6 = true;},TIME_DLYA_DEISTVIYA);
-        console.log(`lab_digital_pin_set_pwm_value pin: ${args.LAB_DIGITAL_PIN} pwm_value: ${args.PWM_VALUE} `);
+      //  console.log(`lab_digital_pin_set_pwm_value pin: ${args.LAB_DIGITAL_PIN} pwm_value: ${args.PWM_VALUE} `);
 
           this.runtime.LCA.setDigitalOnOff(args.LAB_DIGITAL_PIN,args.PWM_VALUE,0);
           util.yield();
@@ -283,7 +283,7 @@ class Scratch3LaboratoryBlocks {
 
       lab_sensor(args){
 
-      console.log(`lab_sensor sensor: ${args.LAB_SENSOR}`);
+    //  console.log(`lab_sensor sensor: ${args.LAB_SENSOR}`);
 
         return   this.runtime.LCA.getSensorData(args.LAB_SENSOR);
 
@@ -319,7 +319,7 @@ class Scratch3LaboratoryBlocks {
 
       lab_button_pressed(args){
 
-          console.log(`lab_button_pressed button number: ${args.BUTTON_NUMBER}`);
+      //    console.log(`lab_button_pressed button number: ${args.BUTTON_NUMBER}`);
 
           return this.runtime.LCA.islaboratoryButtonPressed(0,Number(args.BUTTON_NUMBER));
 
@@ -327,7 +327,7 @@ class Scratch3LaboratoryBlocks {
 
       lab_external_sensor(args){
 
-        console.log(`lab_external_sensor sensor: ${args.LAB_EXTERNAL_SENSOR}`);
+      //  console.log(`lab_external_sensor sensor: ${args.LAB_EXTERNAL_SENSOR}`);
 
       //  var pin = Number(args.LAB_EXTERNAL_SENSOR.replace("A",""));
 
@@ -337,7 +337,7 @@ class Scratch3LaboratoryBlocks {
 
       lab_analog_pin(args){
 
-      console.log(`lab_analog_pin analog_pin: ${args.LAB_ANALOG_PIN}`);
+    //  console.log(`lab_analog_pin analog_pin: ${args.LAB_ANALOG_PIN}`);
 
     //  var pin = Number(args.LAB_ANALOG_PIN.replace("A",""));
 
@@ -347,9 +347,9 @@ class Scratch3LaboratoryBlocks {
 
       lab_digital_pin(args){
 
-        console.log(`lab_digital_pin digital_pin: ${args.LAB_DIGITAL_PIN}`);
+      //  console.log(`lab_digital_pin digital_pin: ${args.LAB_DIGITAL_PIN}`);
 
-        return this.runtime.LCA.labDigitalPinState(0,Number(args.LAB_DIGITAL_PIN));
+        return this.runtime.LCA.labDigitalPinState(0,args.LAB_DIGITAL_PIN);
 
       }
 
@@ -358,7 +358,7 @@ class Scratch3LaboratoryBlocks {
         {
           this.first_coming7 = false;
           setTimeout(()=>{this.timer_dlya_blocka7 = true;},TIME_DLYA_DEISTVIYA*2);
-        console.log(`lab_play_note: ${args.LAB_NOTE}`);
+    //    console.log(`lab_play_note: ${args.LAB_NOTE}`);
 
         let note = args.LAB_NOTE;
 
