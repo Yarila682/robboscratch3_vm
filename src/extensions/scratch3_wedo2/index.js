@@ -40,10 +40,17 @@ const BLEService = {
  */
 const BLECharacteristic = {
     ATTACHED_IO: '00001527-1212-efde-1523-785feabcd123',
+    LOW_VOLTAGE_ALERT: '00001528-1212-efde-1523-785feabcd123',
     INPUT_VALUES: '00001560-1212-efde-1523-785feabcd123',
     INPUT_COMMAND: '00001563-1212-efde-1523-785feabcd123',
     OUTPUT_COMMAND: '00001565-1212-efde-1523-785feabcd123'
 };
+
+/**
+ * A time interval to wait (in milliseconds) in between battery check calls.
+ * @type {number}
+ */
+const BLEBatteryCheckInterval = 5000;
 
 /**
  * A time interval to wait (in milliseconds) while a block that sends a BLE message is running.
@@ -226,7 +233,15 @@ class WeDo2Motor {
      * @param {int} value - this motor's new power level, in the range [0,100].
      */
     set power (value) {
-        this._power = Math.max(0, Math.min(value, 100));
+        const p = Math.max(0, Math.min(value, 100));
+        // Lego Wedo 2.0 hub only turns motors at power range [30 - 100], so
+        // map value from [0 - 100] to [30 - 100].
+        if (p === 0) {
+            this._power = 0;
+        } else {
+            const delta = 100 / p;
+            this._power = 30 + (70 / delta);
+        }
     }
 
     /**
@@ -254,6 +269,8 @@ class WeDo2Motor {
      * Turn this motor on indefinitely.
      */
     turnOn () {
+        if (this._power === 0) return;
+
         const cmd = this._parent.generateOutputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
@@ -271,6 +288,8 @@ class WeDo2Motor {
      * @param {number} milliseconds - run the motor for this long.
      */
     turnOnFor (milliseconds) {
+        if (this._power === 0) return;
+
         milliseconds = Math.max(0, milliseconds);
         this.turnOn();
         this._setNewTimeout(this.startBraking, milliseconds);
@@ -281,6 +300,8 @@ class WeDo2Motor {
      * // TODO: rename this to coastAfter?
      */
     startBraking () {
+        if (this._power === 0) return;
+
         const cmd = this._parent.generateOutputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
@@ -298,6 +319,8 @@ class WeDo2Motor {
      * @param {boolean} [useLimiter=true] - if true, use the rate limiter
      */
     turnOff (useLimiter = true) {
+        if (this._power === 0) return;
+
         const cmd = this._parent.generateOutputCommand(
             this._index + 1,
             WeDo2Command.MOTOR_POWER,
@@ -333,6 +356,8 @@ class WeDo2Motor {
         const timeoutID = setTimeout(() => {
             if (this._pendingTimeoutId === timeoutID) {
                 this._pendingTimeoutId = null;
+                this._pendingTimeoutStartTime = null;
+                this._pendingTimeoutDelay = null;
             }
             callback();
         }, delay);
@@ -356,6 +381,11 @@ class WeDo2 {
          */
         this._runtime = runtime;
         this._runtime.on('PROJECT_STOP_ALL', this.stopAll.bind(this));
+
+        /**
+         * The id of the extension this peripheral belongs to.
+         */
+        this._extensionId = extensionId;
 
         /**
          * A list of the ids of the motors or sensors in ports 1 and 2.
@@ -398,8 +428,17 @@ class WeDo2 {
          */
         this._rateLimiter = new RateLimiter(BLESendRateMax);
 
+        /**
+         * An interval id for the battery check interval.
+         * @type {number}
+         * @private
+         */
+        this._batteryLevelIntervalId = null;
+
+        this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
+        this._checkBatteryLevel = this._checkBatteryLevel.bind(this);
     }
 
     /**
@@ -539,22 +578,23 @@ class WeDo2 {
      */
     stopAll () {
         if (!this.isConnected()) return;
-        this.stopTone()
-            .then(() => { // TODO: Promise?
-                this.stopAllMotors();
-            });
+        this.stopTone();
+        this.stopAllMotors();
     }
 
     /**
      * Called by the runtime when user wants to scan for a WeDo 2.0 peripheral.
      */
     scan () {
-        this._ble = new BLE(this._runtime, {
+        if (this._ble) {
+            this._ble.disconnect();
+        }
+        this._ble = new BLE(this._runtime, this._extensionId, {
             filters: [{
                 services: [BLEService.DEVICE_SERVICE]
             }],
             optionalServices: [BLEService.IO_SERVICE]
-        }, this._onConnect);
+        }, this._onConnect, this.disconnect);
     }
 
     /**
@@ -562,7 +602,9 @@ class WeDo2 {
      * @param {number} id - the id of the peripheral to connect to.
      */
     connect (id) {
-        this._ble.connectPeripheral(id);
+        if (this._ble) {
+            this._ble.connectPeripheral(id);
+        }
     }
 
     /**
@@ -577,7 +619,14 @@ class WeDo2 {
             distance: 0
         };
 
-        this._ble.disconnect();
+        if (this._ble) {
+            this._ble.disconnect();
+        }
+
+        if (this._batteryLevelIntervalId) {
+            window.clearInterval(this._batteryLevelIntervalId);
+            this._batteryLevelIntervalId = null;
+        }
     }
 
     /**
@@ -676,19 +725,14 @@ class WeDo2 {
      * @private
      */
     _onConnect () {
-        // set LED input mode to RGB
-        this.setLEDMode()
-            .then(() => { // TODO: Promise?
-                // set LED to blue
-                this.setLED(0x0000FF);
-            })
-            .then(() => { // TODO: Promise?
-                this._ble.startNotifications(
-                    BLEService.DEVICE_SERVICE,
-                    BLECharacteristic.ATTACHED_IO,
-                    this._onMessage
-                );
-            });
+        this.setLEDMode();
+        this.setLED(0x0000FF);
+        this._ble.startNotifications(
+            BLEService.DEVICE_SERVICE,
+            BLECharacteristic.ATTACHED_IO,
+            this._onMessage
+        );
+        this._batteryLevelIntervalId = window.setInterval(this._checkBatteryLevel, BLEBatteryCheckInterval);
     }
 
     /**
@@ -736,6 +780,19 @@ class WeDo2 {
     }
 
     /**
+     * Check the battery level on the WeDo 2.0. If the WeDo 2.0 has disconnected
+     * for some reason, the BLE socket will get an error back and automatically
+     * close the socket.
+     */
+    _checkBatteryLevel () {
+        this._ble.read(
+            BLEService.DEVICE_SERVICE,
+            BLECharacteristic.LOW_VOLTAGE_ALERT,
+            false
+        );
+    }
+
+    /**
      * Register a new sensor or motor connected at a port.  Store the type of
      * sensor or motor internally, and then register for notifications on input
      * values if it is a sensor.
@@ -762,14 +819,12 @@ class WeDo2 {
                 true
             );
 
-            this.send(BLECharacteristic.INPUT_COMMAND, cmd)
-                .then(() => { // TODO: Promise?
-                    this._ble.startNotifications(
-                        BLEService.IO_SERVICE,
-                        BLECharacteristic.INPUT_VALUES,
-                        this._onMessage
-                    );
-                });
+            this.send(BLECharacteristic.INPUT_COMMAND, cmd);
+            this._ble.startNotifications(
+                BLEService.IO_SERVICE,
+                BLECharacteristic.INPUT_VALUES,
+                this._onMessage
+            );
         }
     }
 
@@ -1080,28 +1135,136 @@ class Scratch3WeDo2Blocks {
             ],
             menus: {
                 MOTOR_ID: [
-                    WeDo2MotorLabel.DEFAULT,
-                    WeDo2MotorLabel.A,
-                    WeDo2MotorLabel.B,
-                    WeDo2MotorLabel.ALL
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorId.default',
+                            default: 'motor',
+                            description: 'label for motor element in motor menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorLabel.DEFAULT
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorId.a',
+                            default: 'motor A',
+                            description: 'label for motor A element in motor menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorLabel.A
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorId.b',
+                            default: 'motor B',
+                            description: 'label for motor B element in motor menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorLabel.B
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorId.all',
+                            default: 'all motors',
+                            description: 'label for all motors element in motor menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorLabel.ALL
+                    }
                 ],
                 MOTOR_DIRECTION: [
-                    WeDo2MotorDirection.FORWARD,
-                    WeDo2MotorDirection.BACKWARD,
-                    WeDo2MotorDirection.REVERSE
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorDirection.forward',
+                            default: 'this way',
+                            description: 'label for forward element in motor direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorDirection.FORWARD
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorDirection.backward',
+                            default: 'that way',
+                            description: 'label for backward element in motor direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorDirection.BACKWARD
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.motorDirection.reverse',
+                            default: 'reverse',
+                            description: 'label for reverse element in motor direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2MotorDirection.REVERSE
+                    }
                 ],
                 TILT_DIRECTION: [
-                    WeDo2TiltDirection.UP,
-                    WeDo2TiltDirection.DOWN,
-                    WeDo2TiltDirection.LEFT,
-                    WeDo2TiltDirection.RIGHT
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.up',
+                            default: 'up',
+                            description: 'label for up element in tilt direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.UP
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.down',
+                            default: 'down',
+                            description: 'label for down element in tilt direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.DOWN
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.left',
+                            default: 'left',
+                            description: 'label for left element in tilt direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.LEFT
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.right',
+                            default: 'right',
+                            description: 'label for right element in tilt direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.RIGHT
+                    }
                 ],
                 TILT_DIRECTION_ANY: [
-                    WeDo2TiltDirection.UP,
-                    WeDo2TiltDirection.DOWN,
-                    WeDo2TiltDirection.LEFT,
-                    WeDo2TiltDirection.RIGHT,
-                    WeDo2TiltDirection.ANY
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.up',
+                            default: 'up'
+                        }),
+                        value: WeDo2TiltDirection.UP
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.down',
+                            default: 'down'
+                        }),
+                        value: WeDo2TiltDirection.DOWN
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.left',
+                            default: 'left'
+                        }),
+                        value: WeDo2TiltDirection.LEFT
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.right',
+                            default: 'right'
+                        }),
+                        value: WeDo2TiltDirection.RIGHT
+                    },
+                    {
+                        text: formatMessage({
+                            id: 'wedo2.tiltDirection.any',
+                            default: 'any',
+                            description: 'label for any element in tilt direction menu for LEGO WeDo 2 extension'
+                        }),
+                        value: WeDo2TiltDirection.ANY
+                    }
                 ],
                 OP: ['<', '>']
             }

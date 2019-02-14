@@ -48,10 +48,6 @@ class CentralDispatch extends SharedDispatch {
             if (this.services.hasOwnProperty(service)) {
                 log.warn(`Central dispatch replacing existing service provider for ${service}`);
             }
-
-            // console.log("service: " + service);
-            // console.trace();
-
             this.services[service] = provider;
             return Promise.resolve();
         } catch (e) {

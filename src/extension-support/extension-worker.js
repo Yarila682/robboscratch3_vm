@@ -17,9 +17,6 @@ class ExtensionWorker {
                 this.workerId = id;
 
                 try {
-
-                    console.log("[ExtensionWorker] Trying to import script: " + extension);
-
                     importScripts(extension);
 
                     const initialRegistrations = this.initialRegistrations;
@@ -27,9 +24,6 @@ class ExtensionWorker {
 
                     Promise.all(initialRegistrations).then(() => dispatch.call('extensions', 'onWorkerInit', id));
                 } catch (e) {
-
-                   console.log("[ExtensionWorker] Error during importing script: " + e);
-
                     dispatch.call('extensions', 'onWorkerInit', id, e);
                 }
             });

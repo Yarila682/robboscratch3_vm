@@ -158,7 +158,7 @@ class EV3Motor {
          * @type {number}
          * @private
          */
-        this._power = 100;
+        this._power = 50;
 
         /**
          * This motor's current position, in the range [0,360].
@@ -231,14 +231,10 @@ class EV3Motor {
     }
 
     /**
-     * @return {int} - this motor's current position, in the range [0,360].
+     * @return {int} - this motor's current position, in the range [-inf,inf].
      */
     get position () {
-        let value = this._position;
-        value = value % 360;
-        value = value < 0 ? value * -1 : value;
-
-        return value;
+        return this._position;
     }
 
     /**
@@ -270,6 +266,8 @@ class EV3Motor {
      * @param {number} milliseconds - run the motor for this long.
      */
     turnOnFor (milliseconds) {
+        if (this._power === 0) return;
+
         const port = this._portMask(this._index);
         let n = milliseconds;
         let speed = this._power * this._direction;
@@ -327,6 +325,8 @@ class EV3Motor {
      * @param {number} time - the time in milliseconds.
      */
     coastAfter (time) {
+        if (this._power === 0) return;
+
         // Set the motor command id to check before starting coast
         const commandId = uid();
         this._commandID = commandId;
@@ -345,6 +345,8 @@ class EV3Motor {
      * Set the motor to coast.
      */
     coast () {
+        if (this._power === 0) return;
+
         const cmd = this._parent.generateCommand(
             Ev3Command.DIRECT_COMMAND_NO_REPLY,
             [
@@ -409,6 +411,11 @@ class EV3 {
         this._runtime.on('PROJECT_STOP_ALL', this.stopAll.bind(this));
 
         /**
+         * The id of the extension this peripheral belongs to.
+         */
+        this._extensionId = extensionId;
+
+        /**
          * A list of the names of the sensors connected in ports 1,2,3,4.
          * @type {string[]}
          * @private
@@ -469,6 +476,7 @@ class EV3 {
         this._bt = null;
         this._runtime.registerPeripheralExtension(extensionId, this);
 
+        this.disconnect = this.disconnect.bind(this);
         this._onConnect = this._onConnect.bind(this);
         this._onMessage = this._onMessage.bind(this);
         this._pollValues = this._pollValues.bind(this);
@@ -548,10 +556,13 @@ class EV3 {
      * Called by the runtime when user wants to scan for an EV3 peripheral.
      */
     scan () {
-        this._bt = new BT(this._runtime, {
+        if (this._bt) {
+            this._bt.disconnect();
+        }
+        this._bt = new BT(this._runtime, this._extensionId, {
             majorDeviceClass: 8,
             minorDeviceClass: 1
-        }, this._onConnect, this._onMessage);
+        }, this._onConnect, this.disconnect, this._onMessage);
     }
 
     /**
@@ -559,17 +570,22 @@ class EV3 {
      * @param {number} id - the id of the peripheral to connect to.
      */
     connect (id) {
-        this._bt.connectPeripheral(id);
+        if (this._bt) {
+            this._bt.connectPeripheral(id);
+        }
     }
 
     /**
      * Called by the runtime when user wants to disconnect from the EV3 peripheral.
      */
     disconnect () {
-        this._bt.disconnect();
         this._clearSensorsAndMotors();
         window.clearInterval(this._pollingIntervalID);
         this._pollingIntervalID = null;
+
+        if (this._bt) {
+            this._bt.disconnect();
+        }
     }
 
     /**
@@ -683,16 +699,17 @@ class EV3 {
             // GET DEVICE LIST
             byteCommands[0] = Ev3Opcode.OPINPUT_DEVICE_LIST;
             byteCommands[1] = Ev3Value.NUM8; // 1 byte to follow
-            byteCommands[2] = 33; // 0x21 ARRAY // TODO: ????
-            byteCommands[3] = 96; // 0x60 CHANGED // TODO: ????
-            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: ????
-            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000 // TODO: ????
+            byteCommands[2] = 33; // 0x21 ARRAY // TODO: document
+            byteCommands[3] = 96; // 0x60 CHANGED // TODO: document
+            byteCommands[4] = 225; // 0xE1 size of global var - 1 byte to follow // TODO: document
+            byteCommands[5] = 32; // 0x20 global var index "0" 0b00100000 // TODO: document
 
             // Command and payload lengths
             allocation = 33;
 
-            // Clear sensor data // TODO: is this enough?
             this._updateDevices = true;
+
+            // TODO: need to clar sensor data?
 
         } else {
             // GET SENSOR VALUES FOR CONNECTED SENSORS
@@ -706,8 +723,8 @@ class EV3 {
                         byteCommands[index + 2] = i; // PORT
                         byteCommands[index + 3] = Ev3Value.DO_NOT_CHANGE_TYPE;
                         byteCommands[index + 4] = Ev3Mode[this._sensorPorts[i]];
-                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow // TODO: ????
-                        byteCommands[index + 6] = sensorCount * 4; // global index // TODO: ????
+                        byteCommands[index + 5] = 225; // 0xE1 one byte to follow // TODO: document
+                        byteCommands[index + 6] = sensorCount * 4; // global index // TODO: document
                         index += 7;
                     }
                     sensorCount++;
@@ -720,9 +737,9 @@ class EV3 {
                 for (let i = 0; i < 4; i++) {
                     byteCommands[index + 0] = Ev3Opcode.OPOUTPUT_GET_COUNT;
                     byteCommands[index + 1] = Ev3Value.LAYER;
-                    byteCommands[index + 2] = i; // port
-                    byteCommands[index + 3] = 225; // 0xE1 byte following
-                    byteCommands[index + 4] = sensorCount * 4; // global index
+                    byteCommands[index + 2] = i; // PORT TODO: explain incorrect documentation as 'Output bit field'
+                    byteCommands[index + 3] = 225; // 0xE1 byte following TODO: document
+                    byteCommands[index + 4] = sensorCount * 4; // global index TODO: document
                     index += 5;
                     sensorCount++;
                 }
@@ -902,6 +919,9 @@ class Scratch3Ev3Blocks {
 
         // Create a new EV3 peripheral instance
         this._peripheral = new EV3(this.runtime, Scratch3Ev3Blocks.EXTENSION_ID);
+
+        this._playNoteForPicker = this._playNoteForPicker.bind(this);
+        this.runtime.on('PLAY_NOTE', this._playNoteForPicker);
     }
 
     /**
@@ -971,7 +991,7 @@ class Scratch3Ev3Blocks {
                         },
                         POWER: {
                             type: ArgumentType.NUMBER,
-                            defaultValue: 50
+                            defaultValue: 100
                         }
                     }
                 },
@@ -1081,7 +1101,7 @@ class Scratch3Ev3Blocks {
                     blockType: BlockType.COMMAND,
                     arguments: {
                         NOTE: {
-                            type: ArgumentType.NUMBER,
+                            type: ArgumentType.NOTE,
                             defaultValue: 60
                         },
                         TIME: {
@@ -1156,8 +1176,12 @@ class Scratch3Ev3Blocks {
         }
 
         const motor = this._peripheral.motor(port);
+        let position = 0;
+        if (motor) {
+            position = MathUtil.wrapClamp(motor.position, 0, 360);
+        }
 
-        return motor ? motor.position : 0;
+        return position;
     }
 
     whenButtonPressed (args) {
@@ -1198,6 +1222,14 @@ class Scratch3Ev3Blocks {
 
     getBrightness () {
         return this._peripheral.brightness;
+    }
+
+    _playNoteForPicker (note, category) {
+        if (category !== this.getInfo().name) return;
+        this.beep({
+            NOTE: note,
+            TIME: 0.25
+        });
     }
 
     beep (args) {

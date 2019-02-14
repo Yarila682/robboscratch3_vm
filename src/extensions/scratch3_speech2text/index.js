@@ -200,6 +200,14 @@ class Scratch3Speech2TextBlocks {
     }
 
     /**
+     * Get the viewer's language code.
+     * @return {string} the language code.
+     */
+    _getViewerLanguageCode () {
+        return formatMessage.setup().locale || navigator.language || navigator.userLanguage || 'en-US';
+    }
+
+    /**
      * Resets all things related to listening. Called on Red Stop sign button.
      *   - suspends audio processing
      *   - closes socket with speech socket server
@@ -207,6 +215,7 @@ class Scratch3Speech2TextBlocks {
      * @private.
      */
     _resetListening () {
+        this.runtime.emitMicListening(false);
         this._stopListening();
         this._closeWebsocket();
         this._resolveSpeechPromises();
@@ -436,6 +445,7 @@ class Scratch3Speech2TextBlocks {
      * @private
      */
     _startListening () {
+        this.runtime.emitMicListening(true);
         this._initListening();
         // Force the block to timeout if we don't get any results back/the user didn't say anything.
         this._speechTimeoutId = setTimeout(this._stopTranscription, listenAndWaitBlockTimeoutMs);
@@ -545,10 +555,12 @@ class Scratch3Speech2TextBlocks {
         // it, start streaming the audio bytes to the server and listening for
         // transcriptions.
         this._socket.addEventListener('message', this._socketMessageCallback, {once: true});
+        const langCode = this._getViewerLanguageCode();
         this._socket.send(JSON.stringify(
             {
                 sampleRate: this._context.sampleRate,
-                phrases: this._phraseList
+                phrases: this._phraseList,
+                locale: langCode
             }
         ));
     }
@@ -602,7 +614,7 @@ class Scratch3Speech2TextBlocks {
             name: formatMessage({
                 id: 'speech.extensionName',
                 default: 'Speech to Text',
-                description: 'Name of extension that adds speech recognition blocks. Do Not translate Google.'
+                description: 'Name of extension that adds speech recognition blocks.'
             }),
             menuIconURI: menuIconURI,
             blockIconURI: iconURI,
