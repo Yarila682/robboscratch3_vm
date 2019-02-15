@@ -39,7 +39,8 @@ const defaultBlockPackages = {
     scratch3_procedures: require('../blocks/scratch3_procedures'),
     scratch3_robot: require('../blocks/scratch3_robot'), //modified_by_Yaroslav
     scratch3_laboratory: require('../blocks/scratch3_laboratory'), //modified_by_Yaroslav
-    scratch3_quadcopter: require('../blocks/scratch3_quadcopter') //modified_by_Yaroslav
+    scratch3_quadcopter: require('../blocks/scratch3_quadcopter'), //modified_by_Yaroslav
+    scratch3_otto: require('../blocks/scratch3_otto') //modified_by_Yaroslav
 };
 
 /**
@@ -158,7 +159,7 @@ let rendererDrawProfilerId = -1;
  * @constructor
  */
 class Runtime extends EventEmitter {
-  constructor (RCA,LCA,QCA) { //modified_by_Yaroslav
+  constructor (RCA,LCA,QCA,OCA) { //modified_by_Yaroslav
       super();
 
       this.RCA = RCA;
@@ -166,6 +167,8 @@ class Runtime extends EventEmitter {
       this.LCA = LCA;
 
       this.QCA = QCA;
+
+      this.OCA = OCA;
 
         /**
          * Target management and storage.
