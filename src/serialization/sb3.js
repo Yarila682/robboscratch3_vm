@@ -59,7 +59,11 @@ const CORE_EXTENSIONS = [
     'robot',
     'laboratory',
     'lab',
-    'otto'
+    'otto',
+    "led",
+    "claw",
+    "rgb",
+    "button"
 ];
 
 // Constants referring to 'primitive' blocks that are usually shadows,

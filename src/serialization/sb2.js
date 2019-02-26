@@ -40,7 +40,11 @@ const CORE_EXTENSIONS = [
     'robot',
     'laboratory',
     'lab',
-    'otto'
+    'otto',
+    "led",
+    "claw",
+    "rgb",
+    "button"
 ];
 
 // Adjust script coordinates to account for
