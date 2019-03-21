@@ -10,6 +10,7 @@ class Scratch3RobotBlocks {
          * @type {Runtime}
          */
          this.runtime = runtime;
+         this.sound_flag=0;
          this.pos_ll=90;
          this.pos_rl=90;
          this.pos_lf=90;

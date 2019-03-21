@@ -153,8 +153,10 @@ this.CopterLANDING =  setInterval(() =>{this.runtime.QCA.move_to_coord(this.x,th
   this.z-=0.1;
   if(this.z<=0.1){
      clearInterval(this.CopterLANDING);
-     this.runtime.QCA.move_to_coord(this.x,this.y,0,this.yaw)
+
+     //this.runtime.QCA.move_to_coord(this.x,this.y,0,this.yaw)
     // this.runtime.QCA.move_with_speed(0,0,0,0);
+      this.runtime.QCA.copter_land();
    }     },200)
     }
     /*BAD*/
