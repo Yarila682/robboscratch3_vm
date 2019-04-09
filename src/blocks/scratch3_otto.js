@@ -337,7 +337,7 @@ class Scratch3RobotBlocks {
     }
 
     otto_matrix_pix(args,util){
-      this.runtime.OCA.one_led(Number(args.MATRIX_STROK),Number(args.MATRIX_STOLB),Number(args.ON_OFF));
+      this.runtime.OCA.one_led(7 - Number(args.MATRIX_STOLB),Number(args.MATRIX_STROK),Number(args.ON_OFF));
     }
 
     otto_matrix_all_pix(args,util){

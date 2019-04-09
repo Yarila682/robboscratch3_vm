@@ -22,7 +22,7 @@ class Scratch3RobotBlocks {
         this.power_right =  Math.round(this.power_in_percent_right * 0.63);
         this.motors_on_interval = null;
         this.motors_off_interval = null;
-        this.need_to_stop = false;
+        this.need_to_stop = true; //false
         this.robot_direction = 'direction_forward';
         this.time = Date.now();
         this.motors_on_time_delta = null;
@@ -34,6 +34,12 @@ class Scratch3RobotBlocks {
 
         this.robot_motors_on_for_seconds_timeout = null;
         this.robot_motors_on_for_seconds_timeout_stop = null;
+
+        this.command_sent = false;
+
+        this.a_command_unblock_interval = null;
+
+        this.set_direction_block_step = 1;
 
         this.runtime.RCA.registerRobotIsScratchduinoCallback(() => {
 
@@ -190,6 +196,7 @@ class Scratch3RobotBlocks {
 
     //  console.trace("Trace: ");
 
+      
 
       let power_left = this.power_left;
       let power_right = this.power_right;
@@ -200,28 +207,78 @@ class Scratch3RobotBlocks {
       clearInterval(this.motors_on_interval);
       this.need_to_stop = false;
 
-      this.motors_on_time2 = Date.now();
+      // this.motors_on_time2 = Date.now();
 
-      if ((this.motors_on_time2 - this.motors_on_time1) <= MOTORS_ON_DELTA ){
+      // let motors_on_time_delta = this.motors_on_time2 - this.motors_on_time1;
 
-            this.motors_on_loop_need = false;
+      // console.log(`motors_on_time_delta: ${motors_on_time_delta}`);
 
-      }else{
+      // if ((this.motors_on_time2 - this.motors_on_time1) <= MOTORS_ON_DELTA ){
 
-            this.motors_on_loop_need = true;
+      //       this.motors_on_loop_need = false;
 
-      }
+      // }else{
 
-      this.motors_on_time1 = Date.now();
+      //       this.motors_on_loop_need = true;
+
+      // }
+
+      // this.motors_on_time1 = Date.now();
 
 
+       this.motors_on_loop_need = true;
+
+      /**
+         We depends on hardware response time. This way we need to sync blocks runtime with hardware. 
+         So here we block "a command (which only returns telemetry)", sync block with hardware (with isRobotReadyToSendCommand()) and use only "c command (motion and telemetry)". 
+      **/
+
+      //this.runtime.RCA.block_A_CommandQueue(); 
 
 
     //  console.log(`this.runtime.RCA.robot_motors_on(${power_left},${power_right})  Time: ${Date.now() - this.time}`);
 
-        this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
 
-    this.motors_on_interval =   setInterval(function(runtime,self){
+
+      //достигнута синхронизация, но потреряна производительность
+      //подумать над этим
+
+       this.command_sent = false;
+
+      if (this.runtime.RCA.isRobotReadyToSendCommand()){
+
+           this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
+           this.command_sent = true;
+           this.runtime.RCA.unblock_A_CommandQueue();
+           clearInterval(this.a_command_unblock_interval);
+          
+          
+      
+      }else{
+
+         this.runtime.RCA.block_A_CommandQueue();  
+         
+         if ( this.a_command_unblock_interval == null){
+
+              this.a_command_unblock_interval = setInterval(() => {
+
+                //if (this.command_sent){
+
+                  this.runtime.RCA.unblock_A_CommandQueue();
+                  clearInterval(this.a_command_unblock_interval);
+                  this.a_command_unblock_interval = null;
+
+                //}
+              },0);
+          }
+
+         util.yield();
+        
+
+      }
+       
+
+    this.motors_on_interval =   setInterval((runtime,self) => {
 
     //    console.log(`Motors on interval1`);
 
@@ -230,7 +287,21 @@ class Scratch3RobotBlocks {
         if (self.motors_on_loop_need){
 
       //    console.log(`Motors on interval2 Time: ${Date.now() - self.time}`);
-          runtime.RCA.setRobotPower(self.power_left,self.power_right,0);
+          //runtime.RCA.setRobotPower(self.power_left,self.power_right,0);
+
+          if (runtime.RCA.isRobotReadyToSendCommand()){
+
+             runtime.RCA.setRobotPower(self.power_left,self.power_right,0);
+            // console.log(`power_left: ${self.power_left} power_right: ${self.power_right}`);
+             this.command_sent = true;
+             this.runtime.RCA.unblock_A_CommandQueue();
+      
+          }else{
+
+              this.runtime.RCA.block_A_CommandQueue(); 
+              this.command_sent = false;
+
+          }
 
         }
 
@@ -243,7 +314,7 @@ class Scratch3RobotBlocks {
       }
 
 
-    }, 25,this.runtime,this);
+    }, 0,this.runtime,this);
 
     }
 
@@ -260,6 +331,9 @@ class Scratch3RobotBlocks {
   // },0,this.runtime,this);
 
     //  this.runtime.RCA.setRobotPower(0,0,0);
+
+      this.runtime.RCA.unblock_A_CommandQueue(); 
+
       clearInterval(this.motors_on_interval);
       clearInterval(this.motors_off_interval);
 
@@ -322,17 +396,43 @@ class Scratch3RobotBlocks {
 
       }
 
+      
+
     }
 
     robot_set_direction_to(args, util){
 
         //  console.log(`robot_set_direction_to`);
 
-          this.robot_direction = args.ROBOT_DIRECTION;
+          if (this.set_direction_block_step == 1){
 
-          this.update_power_using_direction(this.robot_direction);
+             this.robot_direction = args.ROBOT_DIRECTION;
 
+             this.update_power_using_direction(this.robot_direction);
 
+             this.command_sent = false; 
+             this.set_direction_block_step = 2;
+
+             if (!this.need_to_stop){
+
+                    util.yield(); //синхронизируем с блоком motors on //нужно дождаться пока motors on не отправит пакет с выставленным здесь направлением
+             }
+             
+
+          }else if (this.set_direction_block_step == 2){ //баг, если прерываем блок между двумя шагами
+
+            if (!this.command_sent){
+
+                util.yield();
+
+             }else{
+
+                this.set_direction_block_step = 1;
+
+             }
+
+          }
+      
 
     }
 
