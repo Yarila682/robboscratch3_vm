@@ -41,6 +41,8 @@ class Scratch3RobotBlocks {
 
         this.set_direction_block_step = 1;
 
+        this.is_motors_on_active = false;
+
         this.runtime.RCA.registerRobotIsScratchduinoCallback(() => {
 
           this.power_left =  63;
@@ -207,6 +209,8 @@ class Scratch3RobotBlocks {
       clearInterval(this.motors_on_interval);
       this.need_to_stop = false;
 
+      this.is_motors_on_active = false;
+
       // this.motors_on_time2 = Date.now();
 
       // let motors_on_time_delta = this.motors_on_time2 - this.motors_on_time1;
@@ -277,7 +281,7 @@ class Scratch3RobotBlocks {
 
       }
        
-
+    this.is_motors_on_active = true;
     this.motors_on_interval =   setInterval((runtime,self) => {
 
     //    console.log(`Motors on interval1`);
@@ -338,6 +342,8 @@ class Scratch3RobotBlocks {
       clearInterval(this.motors_off_interval);
 
       this.need_to_stop = true;
+
+      this.is_motors_on_active = false;
 
       this.runtime.RCA.setRobotPower(0,0,0);
 
@@ -410,18 +416,23 @@ class Scratch3RobotBlocks {
 
              this.update_power_using_direction(this.robot_direction);
 
-             this.command_sent = false; 
-             this.set_direction_block_step = 2;
 
-             if (!this.need_to_stop){
+            //синхронизируем с блоком motors on //нужно дождаться пока motors on не отправит пакет с выставленным здесь направлением
+            //если motors on  не работает, мы не ждём
+            
+             if (this.is_motors_on_active){
 
-                    util.yield(); //синхронизируем с блоком motors on //нужно дождаться пока motors on не отправит пакет с выставленным здесь направлением
+
+              this.command_sent = false; 
+              this.set_direction_block_step = 2;
+              util.yield(); 
+
              }
              
 
           }else if (this.set_direction_block_step == 2){ //баг, если прерываем блок между двумя шагами
 
-            if (!this.command_sent){
+            if  ((!this.command_sent) && (this.is_motors_on_active) ) {
 
                 util.yield();
 
@@ -702,6 +713,9 @@ class Scratch3RobotBlocks {
 
                 util.stackFrame.steps = null;
 
+                //this.need_to_stop = true; //for robot_set_direction_to //modified_by_Yaroslav
+
+
           }
       } else {
 
@@ -780,6 +794,8 @@ class Scratch3RobotBlocks {
 
               util.stackFrame.steps = null;
 
+              //this.need_to_stop = true; //for robot_set_direction_to //modified_by_Yaroslav
+
         }
     } else {
 
@@ -857,6 +873,8 @@ class Scratch3RobotBlocks {
               //      console.log(`robot_turnleft exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
                     util.stackFrame.steps = null;
+
+                    //this.need_to_stop = true; //for robot_set_direction_to //modified_by_Yaroslav
 
               }
           } else {
