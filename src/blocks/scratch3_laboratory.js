@@ -60,6 +60,17 @@ class Scratch3LaboratoryBlocks {
               setTimeout(()=>{this.timer_dlya_blocka1 = true;},TIME_DLYA_DEISTVIYA);
       //  console.log(`lab_turn_led_on led_position: ${args.LED_NUMS}`);
 
+        try {
+
+           args.LED_NUMS = args.LED_NUMS.toString(); 
+          
+        } catch (error) {
+
+          console.error("Can not convert args.LED_NUMS to String type");
+          
+        }
+       
+
         switch (args.LED_NUMS) {
 
           case '0':
@@ -133,6 +144,16 @@ class Scratch3LaboratoryBlocks {
           setTimeout(()=>{this.timer_dlya_blocka2 = true;},TIME_DLYA_DEISTVIYA);
 
     //    console.log(`lab_turn_led_off led_position: ${args.LED_NUMS}`);
+
+         try {
+
+           args.LED_NUMS = args.LED_NUMS.toString(); 
+          
+        } catch (error) {
+
+          console.error("Can not convert args.LED_NUMS to String type");
+          
+        }
 
         switch (args.LED_NUMS) {
 
