@@ -474,11 +474,11 @@ this.fack=0;
     }
 
     copter_x_coord(args, util){
-      return this.runtime.QCA.get_coord("X");
+      return this.runtime.QCA.telemetry_palette_get_coord("X");
     }
 
     copter_y_coord(args, util){
-     return this.runtime.QCA.get_coord("Y");
+     return this.runtime.QCA.telemetry_palette_get_coord("Y");
     }
 
     copter_yaw(args, util){
@@ -592,7 +592,7 @@ this.fack=0;
           this.nowy =Number( this.runtime.QCA.get_coord("Y")); //get_coord("Y") //telemetry_palette_get_coord("Y")
           this.nowz =Number( this.runtime.QCA.get_coord("Z"));
 
-           console.warn(`this.nowx: ${this.nowx} this.nowy: ${this.nowy} typeof this.nowx ${typeof(this.nowx)} typeof this.nowy ${typeof(this.nowy)}`);
+           //console.warn(`this.nowx: ${this.nowx} this.nowy: ${this.nowy} typeof this.nowx ${typeof(this.nowx)} typeof this.nowy ${typeof(this.nowy)}`);
 
           if((Math.abs(this.nowx-this.x)<this.delta)&&(Math.abs(this.nowy-this.y)<this.delta)&&(Math.abs(this.nowz-this.z)<this.delta))
           this.fack=2;
