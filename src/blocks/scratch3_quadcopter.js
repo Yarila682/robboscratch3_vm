@@ -26,6 +26,9 @@ class Scratch3QuadcopterBlocks {
           this.yielded_time_now   = Date.now();
           this.yielded_max_time = 1 * 60 * 1000;  //// TODO: сделать рассчёт через секунды требуемые на выполнение блока
 
+          this.x_telemetry_delta = 0; //погрешность автокалибровки. Показывает примерно 0.5
+          this.y_telemetry_delta = 0; //погрешность автокалибровки. Показывает примерно 0.5
+
 
             }
 
@@ -179,8 +182,8 @@ clearInterval(this.CopterLANDING);
 
         this.init_start_coordinates();
 
-        this.x = this.x + Number(args.CENTIMETERS) / 100 * Math.cos((this.yaw+this.dir) * Math.PI / 180);
-        this.y = this.y + Number(args.CENTIMETERS) / 100 * Math.sin((this.yaw+this.dir) * Math.PI / 180);
+        this.x = this.x + Number(args.METERS) * Math.cos((this.yaw+this.dir) * Math.PI / 180); //Number(args.CENTIMETERS) / 100
+        this.y = this.y + Number(args.METERS) * Math.sin((this.yaw+this.dir) * Math.PI / 180); //Number(args.CENTIMETERS) / 100
         console.log(`HUUUUIX: ${this.x}`);
           console.log(`HUUUUIY: ${this.y}`)
         this.yielded_time_start = Date.now();
@@ -515,14 +518,43 @@ this.fack=0;
       this.fack=0;
     }
 //this.yaw
+
+
     copter_fly_to_coords(args, util){
         if(this.fack==0)
         {
       //    this.yielded = 0;
+
+          this.x_telemetry_delta =  this.runtime.QCA.get_x_telemetry_delta();
+          this.y_telemetry_delta =  this.runtime.QCA.get_y_telemetry_delta();
+
+
           this.init_start_coordinates();
           this.x = Number(args.X_COORD);
           this.y = Number(args.Y_COORD);
           this.z = Number(args.Z_COORD);
+
+           if (this.x > 0){ //предполагаем, что  this.x_telemetry_delta > 0
+
+                this.x = this.x + this.x_telemetry_delta;
+
+              }else{
+
+                this.x = this.x + this.x_telemetry_delta;
+
+              }
+
+           if (this.y > 0){ //предполагаем, что  this.y_telemetry_delta > 0
+
+                this.y = this.y + this.y_telemetry_delta;
+
+            }else{
+
+                this.y = this.y + this.y_telemetry_delta;
+
+            }   
+
+            console.warn(`this.x: ${this.x} this.y: ${this.y} typeof this.x ${typeof(this.x)} typeof this.y ${typeof(this.y)}`);
 
           this.yielded_time_start = Date.now();
           this.yielded_time_now = Date.now();
@@ -556,9 +588,11 @@ this.fack=0;
           //  this.yielded = 0;
           }
 
-          this.nowx =Number( this.runtime.QCA.get_coord("X"));
-          this.nowy =Number( this.runtime.QCA.get_coord("Y"));
+          this.nowx =Number( this.runtime.QCA.get_coord("X")); //get_coord("X") //telemetry_palette_get_coord("X")
+          this.nowy =Number( this.runtime.QCA.get_coord("Y")); //get_coord("Y") //telemetry_palette_get_coord("Y")
           this.nowz =Number( this.runtime.QCA.get_coord("Z"));
+
+           console.warn(`this.nowx: ${this.nowx} this.nowy: ${this.nowy} typeof this.nowx ${typeof(this.nowx)} typeof this.nowy ${typeof(this.nowy)}`);
 
           if((Math.abs(this.nowx-this.x)<this.delta)&&(Math.abs(this.nowy-this.y)<this.delta)&&(Math.abs(this.nowz-this.z)<this.delta))
           this.fack=2;
@@ -643,13 +677,13 @@ this.fack=0;
           this.dir = 0;
         break;
         case 'direction_right':
-          this.dir = 90;
+          this.dir = 270; //90
         break;
         case 'direction_backward':
           this.dir = 180;
         break;
         case 'direction_left':
-          this.dir = 270;
+          this.dir = 90; //270
         break;
       }
     }
