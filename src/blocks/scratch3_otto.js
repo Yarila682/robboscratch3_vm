@@ -216,37 +216,37 @@ class Scratch3RobotBlocks {
 
         switch(Number(args.OTTO_SERVO))
         {
-          case 0:
+          case 2: //left leg
           {
             this.block_time = Date.now() + 2.3 * (Number(args.SERVO_SPEED) + 0.4) * 350 * Math.max(Math.abs(this.pos_ll - Number(args.SERVO_DIST))) / 180;
             this.pos_ll=Number(args.SERVO_DIST);
           break;
           }
-          case 1:
+          case 3: //right leg
           {
             this.block_time = Date.now() + 2.3 * (Number(args.SERVO_SPEED) + 0.4) * 350 * Math.max(Math.abs(this.pos_rl - Number(args.SERVO_DIST))) / 180;
             this.pos_rl=Number(args.SERVO_DIST);
           break;
           }
-          case 2:
+          case 0: //left foot
           {
             this.block_time = Date.now() + 2.3 * (Number(args.SERVO_SPEED) + 0.4) * 350 * Math.max(Math.abs(this.pos_lf - Number(args.SERVO_DIST))) / 180;
             this.pos_lf=Number(args.SERVO_DIST);
           break;
           }
-          case 3:
+          case 1://right foot
           {
             this.block_time = Date.now() + 2.3 * (Number(args.SERVO_SPEED) + 0.4) * 350 * Math.max(Math.abs(this.pos_rf - Number(args.SERVO_DIST))) / 180;
             this.pos_rf=Number(args.SERVO_DIST);
           break;
           }
-          case 4:
+          case 4://left hand
           {
             this.block_time = Date.now() + 2.3 * (Number(args.SERVO_SPEED) + 0.4) * 350 * Math.max(Math.abs(this.pos_lh - Number(args.SERVO_DIST))) / 180;
             this.pos_lh=Number(args.SERVO_DIST);
           break;
           }
-          case 5:
+          case 5://right hand
           {
             this.block_time = Date.now() + 2.3 * (Number(args.SERVO_SPEED) + 0.4) * 350 * Math.max(Math.abs(this.pos_rh - Number(args.SERVO_DIST))) / 180;
             this.pos_rh=Number(args.SERVO_DIST);

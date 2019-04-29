@@ -360,7 +360,8 @@ this.fack=0;
       this.init_start_coordinates();
 
 
-      this.y = this.y + Number(args.DISTANCE_DELTA);
+      
+      this.y = this.y - Number(args.DISTANCE_DELTA); //+
 
 
 
@@ -474,19 +475,19 @@ this.fack=0;
     }
 
     copter_x_coord(args, util){
-      return this.runtime.QCA.telemetry_palette_get_coord("X");
+      return Number(this.runtime.QCA.telemetry_palette_get_coord("X"));
     }
 
     copter_y_coord(args, util){
-     return this.runtime.QCA.telemetry_palette_get_coord("Y");
+     return Number(this.runtime.QCA.telemetry_palette_get_coord("Y"));
     }
 
     copter_yaw(args, util){
-     return this.runtime.QCA.get_coord("W");
+     return Number(this.runtime.QCA.telemetry_palette_get_coord("W")); //get_coord("W")
     }
 
     copter_z_coord(args, util){
-     return this.runtime.QCA.get_coord("Z");
+     return Number(this.runtime.QCA.telemetry_palette_get_coord("Z")); //get_coord("Z")
     }
 
 
@@ -531,7 +532,8 @@ this.fack=0;
 
           this.init_start_coordinates();
           this.x = Number(args.X_COORD);
-          this.y = Number(args.Y_COORD);
+          //this.y = Number(args.Y_COORD);
+          this.y = Number(args.Y_COORD) * -1; //разворачиваем ось 
           this.z = Number(args.Z_COORD);
 
            if (this.x > 0){ //предполагаем, что  this.x_telemetry_delta > 0
@@ -554,7 +556,7 @@ this.fack=0;
 
             }   
 
-            console.warn(`this.x: ${this.x} this.y: ${this.y} typeof this.x ${typeof(this.x)} typeof this.y ${typeof(this.y)}`);
+            //console.warn(`this.x: ${this.x} this.y: ${this.y} typeof this.x ${typeof(this.x)} typeof this.y ${typeof(this.y)}`);
 
           this.yielded_time_start = Date.now();
           this.yielded_time_now = Date.now();
@@ -609,6 +611,23 @@ this.fack=0;
         this.fack=0;
       }
 
+    cast_yaw_to_360(yaw){
+
+      if (yaw > 0){
+
+                        //целочисл. деление
+        yaw =  yaw -    (yaw/360>>0)            * 360;
+
+
+      }else if (yaw < 0){
+
+           yaw =  yaw +    (yaw/360>>0)            * -360;
+      }
+
+      return yaw;
+
+    }
+
     copter_rotate(args, util){
       {
           if(this.fack==0)
@@ -618,8 +637,15 @@ this.fack=0;
 
           this.init_start_coordinates();
 
-          this.yaw += Number(args.DEGREES);
+          this.yaw += Number(args.DEGREES); //+- 2
 
+          if ((this.yaw > 360) || (this.yaw < -360)){
+
+            this.yaw = this.cast_yaw_to_360(this.yaw);
+
+          }
+
+          //console.warn("copter_rotate yaw: " + this.yaw);
 
 
           this.yielded_time_start = Date.now();
