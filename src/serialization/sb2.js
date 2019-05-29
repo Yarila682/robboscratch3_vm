@@ -44,7 +44,14 @@ const CORE_EXTENSIONS = [
     "led",
     "claw",
     "rgb",
-    "button"
+    "button",
+
+    "newcat",
+    "high",
+    "sosonic",
+    "pwm",
+    "pin",
+    "stolb"
 ];
 
 // Adjust script coordinates to account for

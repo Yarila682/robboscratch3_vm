@@ -28,6 +28,7 @@ const {LaboratoryControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
 const {QuadcopterControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
 const {DeviceControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
 const {OttoControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
+const {ArduinoControlAPI} =  require ('Robboscratch3_DeviceControlAPI');
 
 const RESERVED_NAMES = ['_mouse_', '_stage_', '_edge_', '_myself_', '_random_'];
 
@@ -57,12 +58,13 @@ class VirtualMachine extends EventEmitter {
         this.QCA = new QuadcopterControlAPI(); //modified_by_Yaroslav //not original
         this.DCA = new DeviceControlAPI; //modified_by_Yaroslav //not original
         this.OCA = new OttoControlAPI; //modified_by_Yaroslav //not original
+        this.ACA = new ArduinoControlAPI; //modified_by_Yaroslav //not original
 
         /**
          * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
          * @type {!Runtime}
          */
-        this.runtime = new Runtime(this.RCA, this.LCA,this.QCA,this.OCA);
+        this.runtime = new Runtime(this.RCA, this.LCA,this.QCA,this.OCA,this.ACA);
         centralDispatch.setService('runtime', this.runtime).catch(e => {
             log.error(`Failed to register runtime service: ${JSON.stringify(e)}`);
         });
@@ -187,6 +189,13 @@ class VirtualMachine extends EventEmitter {
 
        return this.OCA;
     }
+
+    getACA(){
+
+
+       return this.ACA;
+    }
+
 
     getDCA(){
 

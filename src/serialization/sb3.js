@@ -63,7 +63,14 @@ const CORE_EXTENSIONS = [
     "led",
     "claw",
     "rgb",
-    "button"
+    "button",
+    
+    "newcat",
+    "high",
+    "sosonic",
+    "pwm",
+    "pin",
+    "stolb"
 ];
 
 // Constants referring to 'primitive' blocks that are usually shadows,

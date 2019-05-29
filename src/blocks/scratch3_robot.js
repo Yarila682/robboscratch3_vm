@@ -141,6 +141,8 @@ class Scratch3RobotBlocks {
       //  clearInterval(this.motors_off_interval);
     //   this.runtime.RCA.setRobotPower(0,0,0);
 
+        this.is_motors_on_active = false;
+
 
         if (util.stackFrame.timer) {
 
@@ -693,6 +695,8 @@ class Scratch3RobotBlocks {
     //  clearInterval(this.motors_off_interval);
     // this.runtime.RCA.setRobotPower(0,0,0);
 
+    this.is_motors_on_active = false;
+
       clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);
 
       if ((util.stackFrame.steps != null) && (typeof(util.stackFrame.steps) != 'undefined') ) {
@@ -768,6 +772,7 @@ class Scratch3RobotBlocks {
     //       }
 
 
+    this.is_motors_on_active = false;
 
     clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);
 
@@ -848,6 +853,7 @@ class Scratch3RobotBlocks {
           //
           // }
 
+          this.is_motors_on_active = false;
 
           clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);
 
