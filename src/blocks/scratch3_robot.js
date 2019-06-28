@@ -254,7 +254,7 @@ class Scratch3RobotBlocks {
 
        this.command_sent = false;
 
-      if (this.runtime.RCA.isRobotReadyToSendCommand()){
+      if (this.runtime.RCA.isRobotReadyToAcceptCommand()){
 
            this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
            this.command_sent = true;
@@ -356,7 +356,7 @@ class Scratch3RobotBlocks {
       this.is_motors_on_active = false;
 
 
-    if (this.runtime.RCA.isRobotReadyToSendCommand()){
+    if (this.runtime.RCA.isRobotReadyToAcceptCommand()){
 
            this.runtime.RCA.setRobotPower(0,0,0);
            this.command_sent = true;
@@ -493,7 +493,7 @@ class Scratch3RobotBlocks {
 
             if (this.is_motors_on_active){
 
-                if (this.runtime.RCA.isRobotReadyToSendCommand()){
+                if (this.runtime.RCA.isRobotReadyToAcceptCommand()){
 
                       
                    this.activate_robot_power();
