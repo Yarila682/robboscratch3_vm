@@ -43,6 +43,11 @@ class Scratch3RobotBlocks {
 
         this.is_motors_on_active = false;
 
+        this.time_sent1 = Date.now();
+        this.time_sent2 = Date.now();
+        this.time_sent3 = Date.now();
+
+
         this.runtime.RCA.registerRobotIsScratchduinoCallback(() => {
 
           this.power_left =  63;
@@ -211,7 +216,7 @@ class Scratch3RobotBlocks {
       clearInterval(this.motors_on_interval);
       this.need_to_stop = false;
 
-      this.is_motors_on_active = false;
+      this.is_motors_on_active = true;
 
       // this.motors_on_time2 = Date.now();
 
@@ -246,8 +251,6 @@ class Scratch3RobotBlocks {
 
 
 
-      //достигнута синхронизация, но потреряна производительность
-      //подумать над этим
 
        this.command_sent = false;
 
@@ -255,6 +258,7 @@ class Scratch3RobotBlocks {
 
            this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
            this.command_sent = true;
+           this.time_sent1 = Date.now();
            this.runtime.RCA.unblock_A_CommandQueue();
            clearInterval(this.a_command_unblock_interval);
           
@@ -264,63 +268,63 @@ class Scratch3RobotBlocks {
 
          this.runtime.RCA.block_A_CommandQueue();  
          
-         if ( this.a_command_unblock_interval == null){
+        //  if ( this.a_command_unblock_interval == null){
 
-              this.a_command_unblock_interval = setInterval(() => {
+        //       this.a_command_unblock_interval = setInterval(() => {
 
-                //if (this.command_sent){
+        //         //if (this.command_sent){
 
-                  this.runtime.RCA.unblock_A_CommandQueue();
-                  clearInterval(this.a_command_unblock_interval);
-                  this.a_command_unblock_interval = null;
+        //           this.runtime.RCA.unblock_A_CommandQueue();
+        //           clearInterval(this.a_command_unblock_interval);
+        //           this.a_command_unblock_interval = null;
 
-                //}
-              },0);
-          }
+        //         //}
+        //       },0);
+        //   }
 
          util.yield();
         
 
       }
        
-    this.is_motors_on_active = true;
-    this.motors_on_interval =   setInterval((runtime,self) => {
+    // this.is_motors_on_active = true;
+    // this.motors_on_interval =   setInterval((runtime,self) => {
 
-    //    console.log(`Motors on interval1`);
+    
 
-      if (!self.need_to_stop){
+    //   if (!self.need_to_stop){
 
-        if (self.motors_on_loop_need){
+    //     if (self.motors_on_loop_need){
 
-      //    console.log(`Motors on interval2 Time: ${Date.now() - self.time}`);
-          //runtime.RCA.setRobotPower(self.power_left,self.power_right,0);
+     
 
-          if (runtime.RCA.isRobotReadyToSendCommand()){
+    //       if (runtime.RCA.isRobotReadyToSendCommand()){
 
-             runtime.RCA.setRobotPower(self.power_left,self.power_right,0);
-            // console.log(`power_left: ${self.power_left} power_right: ${self.power_right}`);
-             this.command_sent = true;
-             this.runtime.RCA.unblock_A_CommandQueue();
+    //          runtime.RCA.setRobotPower(self.power_left,self.power_right,0);
+    //         // console.log(`power_left: ${self.power_left} power_right: ${self.power_right}`);
+    //          this.command_sent = true;
+    //          this.runtime.RCA.unblock_A_CommandQueue();
+    //          this.time_sent1 = Date.now();
       
-          }else{
+    //       }else{
 
-              this.runtime.RCA.block_A_CommandQueue(); 
-              this.command_sent = false;
+    //           this.runtime.RCA.block_A_CommandQueue(); 
+    //           this.command_sent = false;
 
-          }
+    //       }
 
-        }
-
-
-
-      }else{
-
-           runtime.RCA.setRobotPower(0,0,0);
-
-      }
+    //     }
 
 
-    }, 0,this.runtime,this);
+
+    //   }else{
+
+    //        runtime.RCA.setRobotPower(0,0,0);
+
+    //   }
+
+
+    // }, 0,this.runtime,this);
 
     }
 
@@ -338,7 +342,11 @@ class Scratch3RobotBlocks {
 
     //  this.runtime.RCA.setRobotPower(0,0,0);
 
-      this.runtime.RCA.unblock_A_CommandQueue(); 
+
+      this.time_sent2 = Date.now();
+
+     // console.log(`motors on_off delta: ${this.time_sent2 - this.time_sent1}`);
+
 
       clearInterval(this.motors_on_interval);
       clearInterval(this.motors_off_interval);
@@ -347,7 +355,39 @@ class Scratch3RobotBlocks {
 
       this.is_motors_on_active = false;
 
-      this.runtime.RCA.setRobotPower(0,0,0);
+
+    if (this.runtime.RCA.isRobotReadyToSendCommand()){
+
+           this.runtime.RCA.setRobotPower(0,0,0);
+           this.command_sent = true;
+           this.time_sent3 = Date.now();
+          // console.log(`motors on_off delta after power: ${this.time_sent3 - this.time_sent1}`);
+           this.runtime.RCA.unblock_A_CommandQueue();
+           clearInterval(this.a_command_unblock_interval);
+          
+          
+      
+      }else{
+
+         this.runtime.RCA.block_A_CommandQueue();  
+         
+         util.yield();
+        
+
+      }
+
+
+     // this.runtime.RCA.setRobotPower(0,0,0);
+
+     // this.runtime.RCA.unblock_A_CommandQueue(); 
+
+      //  this.time_sent3 = Date.now();
+
+      // console.log(`motors on_off delta after power: ${this.time_sent3 - this.time_sent1}`);
+
+      // this.time_sent2 = Date.now();
+
+      // console.log(`motors on_off delta: ${this.time_sent2 - this.time_sent1}`);
 
       // this.motors_off_interval =   setInterval(function(runtime,self){
       //
@@ -412,41 +452,72 @@ class Scratch3RobotBlocks {
 
         //  console.log(`robot_set_direction_to`);
 
-          if (this.set_direction_block_step == 1){
+          // if (this.set_direction_block_step == 1){
 
-             this.robot_direction = args.ROBOT_DIRECTION;
+          //    this.robot_direction = args.ROBOT_DIRECTION;
 
-             this.update_power_using_direction(this.robot_direction);
+          //    this.update_power_using_direction(this.robot_direction);
 
 
-            //синхронизируем с блоком motors on //нужно дождаться пока motors on не отправит пакет с выставленным здесь направлением
-            //если motors on  не работает, мы не ждём
+          //   //синхронизируем с блоком motors on //нужно дождаться пока motors on не отправит пакет с выставленным здесь направлением
+          //   //если motors on  не работает, мы не ждём
             
-             if (this.is_motors_on_active){
+          //    if (this.is_motors_on_active){
 
 
-              this.command_sent = false; 
-              this.set_direction_block_step = 2;
-              util.yield(); 
+          //     this.command_sent = false; 
+          //     this.set_direction_block_step = 2;
+          //     util.yield(); 
 
-             }
+          //    }
              
 
-          }else if (this.set_direction_block_step == 2){ //баг, если прерываем блок между двумя шагами
+          // }else if (this.set_direction_block_step == 2){ //баг, если прерываем блок между двумя шагами
 
-            if  ((!this.command_sent) && (this.is_motors_on_active) ) {
+          //   if  ((!this.command_sent) && (this.is_motors_on_active) ) {
 
-                util.yield();
+          //       util.yield();
 
-             }else{
+          //    }else{
 
-                this.set_direction_block_step = 1;
+          //       this.set_direction_block_step = 1;
 
-             }
+          //    }
 
-          }
+          // }
+
+
+           this.robot_direction = args.ROBOT_DIRECTION;
+
+            this.update_power_using_direction(this.robot_direction);
+
+            if (this.is_motors_on_active){
+
+                if (this.runtime.RCA.isRobotReadyToSendCommand()){
+
+                      
+                   this.activate_robot_power();
+                   this.runtime.RCA.unblock_A_CommandQueue();  
+          
+                  
+                  }else{
+
+                    this.runtime.RCA.block_A_CommandQueue();  
+                    util.yield();
+                    
+
+                  }
+
+            }
       
 
+    }
+
+
+    activate_robot_power(){
+
+        this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
+           
     }
 
     robot_get_sensor_data(args, util){
