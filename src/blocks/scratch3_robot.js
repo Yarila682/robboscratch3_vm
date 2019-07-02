@@ -1083,6 +1083,20 @@ class Scratch3RobotBlocks {
 
     //   console.log(`robot_turn_led_on led_position: ${args.ROBOT_POSITION}`);
 
+       if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){ 
+
+              this.runtime.RCA.block_A_CommandQueue();  //not ready right now 
+              util.yield();
+              return;
+                    
+
+        }
+
+
+        //here we ready
+
+        this.runtime.RCA.unblock_A_CommandQueue(); 
+
        switch (args.ROBOT_POSITION) {
 
          case 'position1':
@@ -1124,6 +1138,18 @@ class Scratch3RobotBlocks {
     robot_turn_led_off(args, util){
 
     //  console.log(`robot_turn_led_off led_position: ${args.ROBOT_POSITION}`);
+      
+      if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){ 
+
+              this.runtime.RCA.block_A_CommandQueue();  //not ready right now 
+              util.yield();
+              return;
+                    
+
+        }
+
+
+        //here we ready
 
       switch (args.ROBOT_POSITION) {
 
@@ -1161,6 +1187,8 @@ class Scratch3RobotBlocks {
 
       }
 
+      this.runtime.RCA.unblock_A_CommandQueue(); 
+
 
     }
 
@@ -1178,13 +1206,38 @@ class Scratch3RobotBlocks {
 
         var degrees = this.check_value_out_of_range(args.CLAW_CLOSED_PERCENT,0,100);
 
-        this.runtime.RCA.setClawDegrees(degrees,0);
+        if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){ 
+
+              this.runtime.RCA.block_A_CommandQueue();  //not ready right now 
+              util.yield();
+              return;
+                    
+
+        }
+
+
+        //here we ready
+         this.runtime.RCA.setClawDegrees(degrees,0);
+
+        this.runtime.RCA.unblock_A_CommandQueue(); 
 
     }
 
     robot_claw_state(args, util){
 
     //    console.log(`robot_claw_state state: ${args.CLAW_STATES}`);
+
+       if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){ 
+
+              this.runtime.RCA.block_A_CommandQueue();  //not ready right now 
+              util.yield();
+              return;
+                    
+
+        }
+
+
+        //here we ready
 
         switch (args.CLAW_STATES) {
 
@@ -1209,6 +1262,9 @@ class Scratch3RobotBlocks {
           default:
 
         }
+
+        this.runtime.RCA.unblock_A_CommandQueue(); 
+
 
 
     }
