@@ -173,6 +173,16 @@ class Runtime extends EventEmitter {
 
       this.ACA = ACA;
 
+      this.stepThreadsStartTime = Date.now();
+      this.stepThreadsEndTime = Date.now();
+
+      this.allOtherStuffBeginTime = Date.now();
+      this.allOtherStuffEndTime = Date.now();
+
+      this.allOtherStuffBeginTime_2 = Date.now();
+      this.allOtherStuffEndTime_2 = Date.now();
+
+
         /**
          * Target management and storage.
          * @type {Array.<!Target>}
@@ -670,14 +680,18 @@ class Runtime extends EventEmitter {
      * How rapidly we try to step threads by default, in ms.
      */
     static get THREAD_STEP_INTERVAL () {
-        return 1000 / 60;
+        //return 1000 / 60;
+
+       return 4;
     }
 
     /**
      * In compatibility mode, how rapidly we try to step threads, in ms.
      */
     static get THREAD_STEP_INTERVAL_COMPATIBILITY () {
-        return 1000 / 30;
+       // return 1000 / 30;
+
+        return 4;
     }
 
     /**
@@ -1731,6 +1745,11 @@ class Runtime extends EventEmitter {
      * inactive threads after each iteration.
      */
     _step () {
+
+      //  console.log(`_step begin`);
+
+        this.allOtherStuffBeginTime = Date.now();
+
         if (this.profiler !== null) {
             if (stepProfilerId === -1) {
                 stepProfilerId = this.profiler.idByName('Runtime._step');
@@ -1757,7 +1776,22 @@ class Runtime extends EventEmitter {
             }
             this.profiler.start(stepThreadsProfilerId);
         }
+
+        this.allOtherStuffEndTime = Date.now();
+
+       // console.log(`all other stuff time 1: ${this.allOtherStuffEndTime -  this.allOtherStuffBeginTime}`);
+
+        this.stepThreadsStartTime = Date.now();
+
         const doneThreads = this.sequencer.stepThreads();
+
+         this.stepThreadsEndTime = Date.now();
+
+       // console.log(`time threads: ${ this.stepThreadsEndTime -  this.stepThreadsStartTime}`);
+
+
+        this.allOtherStuffBeginTime_2 = Date.now();
+
         if (this.profiler !== null) {
             this.profiler.stop();
         }
@@ -1798,6 +1832,12 @@ class Runtime extends EventEmitter {
             this.profiler.stop();
             this.profiler.reportFrames();
         }
+
+        this.allOtherStuffEndTime_2 = Date.now();
+
+        //console.log(`all other stuff time 2: ${this.allOtherStuffEndTime_2 -  this.allOtherStuffBeginTime_2}`);
+
+       // console.log(`_step end`);
     }
 
     /**

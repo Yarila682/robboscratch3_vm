@@ -47,6 +47,8 @@ class Scratch3RobotBlocks {
         this.time_sent2 = Date.now();
         this.time_sent3 = Date.now();
 
+       
+
 
         this.runtime.RCA.registerRobotIsScratchduinoCallback(() => {
 
@@ -60,6 +62,7 @@ class Scratch3RobotBlocks {
           this.power_left  =  Math.round(this.power_in_percent_left * 0.63);
           this.power_right =  Math.round(this.power_in_percent_right * 0.63);
 
+          
         });
     }
 
@@ -205,6 +208,13 @@ class Scratch3RobotBlocks {
 
     //  console.trace("Trace: ");
 
+    //  this.runtime.enableProfiling((frame) => {
+
+    //         console.warn("frame: ");
+    //         console.warn(frame);
+    //     });
+
+
       
 
       let power_left = this.power_left;
@@ -258,7 +268,7 @@ class Scratch3RobotBlocks {
 
            this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
            this.command_sent = true;
-           this.time_sent1 = Date.now();
+          // this.time_sent1 = Date.now();
            this.runtime.RCA.unblock_A_CommandQueue();
            clearInterval(this.a_command_unblock_interval);
           
@@ -343,9 +353,11 @@ class Scratch3RobotBlocks {
     //  this.runtime.RCA.setRobotPower(0,0,0);
 
 
-      this.time_sent2 = Date.now();
+    //  this.time_sent2 = Date.now();
 
      // console.log(`motors on_off delta: ${this.time_sent2 - this.time_sent1}`);
+
+    
 
 
       clearInterval(this.motors_on_interval);
@@ -360,7 +372,7 @@ class Scratch3RobotBlocks {
 
            this.runtime.RCA.setRobotPower(0,0,0);
            this.command_sent = true;
-           this.time_sent3 = Date.now();
+          // this.time_sent3 = Date.now();
           // console.log(`motors on_off delta after power: ${this.time_sent3 - this.time_sent1}`);
            this.runtime.RCA.unblock_A_CommandQueue();
            clearInterval(this.a_command_unblock_interval);
@@ -486,6 +498,13 @@ class Scratch3RobotBlocks {
 
           // }
 
+          this.time_sent1 = Date.now();
+          this.time_sent3 = this.time_sent1 - this.time_sent2;
+
+          //console.log(`time sent delta: ${this.time_sent3} robot_direction: ${args.ROBOT_DIRECTION}`);
+
+          this.time_sent2 = Date.now();
+
 
            this.robot_direction = args.ROBOT_DIRECTION;
 
@@ -501,6 +520,8 @@ class Scratch3RobotBlocks {
           
                   
                   }else{
+
+                    //return;
 
                     this.runtime.RCA.block_A_CommandQueue();  
                     util.yield();

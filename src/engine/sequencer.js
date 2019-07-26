@@ -51,6 +51,9 @@ class Sequencer {
          * @type {!Runtime}
          */
         this.runtime = runtime;
+
+        this.stepThreadStartTime = Date.now();
+        this.stepThreadEndTime = Date.now();
     }
 
     /**
@@ -87,6 +90,7 @@ class Sequencer {
                numActiveThreads > 0 &&
                this.timer.timeElapsed() < WORK_TIME &&
                (this.runtime.turboMode || !this.runtime.redrawRequested)) {
+                   console.log(`timeElapsed: ${ this.timer.timeElapsed()}  work_time: ${ WORK_TIME}`);
             if (this.runtime.profiler !== null) {
                 if (stepThreadsInnerProfilerId === -1) {
                     stepThreadsInnerProfilerId = this.runtime.profiler.idByName(stepThreadsInnerProfilerFrame);
@@ -120,7 +124,15 @@ class Sequencer {
                         }
                         this.runtime.profiler.start(stepThreadProfilerId);
                     }
+                    
+                    this.stepThreadStartTime = Date.now();
+
                     this.stepThread(activeThread);
+
+                    this.stepThreadEndTime = Date.now();
+
+                    //console.warn(`stepThread time: ${ this.stepThreadEndTime -  this.stepThreadStartTime}`);
+
                     if (this.runtime.profiler !== null) {
                         this.runtime.profiler.stop();
                     }
