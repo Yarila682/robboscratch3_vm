@@ -90,7 +90,7 @@ class Sequencer {
                numActiveThreads > 0 &&
                this.timer.timeElapsed() < WORK_TIME &&
                (this.runtime.turboMode || !this.runtime.redrawRequested)) {
-                   console.log(`timeElapsed: ${ this.timer.timeElapsed()}  work_time: ${ WORK_TIME}`);
+                 //  console.log(`timeElapsed: ${ this.timer.timeElapsed()}  work_time: ${ WORK_TIME}`);
             if (this.runtime.profiler !== null) {
                 if (stepThreadsInnerProfilerId === -1) {
                     stepThreadsInnerProfilerId = this.runtime.profiler.idByName(stepThreadsInnerProfilerFrame);

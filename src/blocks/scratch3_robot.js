@@ -374,6 +374,7 @@ class Scratch3RobotBlocks {
            this.command_sent = true;
           // this.time_sent3 = Date.now();
           // console.log(`motors on_off delta after power: ${this.time_sent3 - this.time_sent1}`);
+           this.runtime.RCA.unblockPowerCommand();
            this.runtime.RCA.unblock_A_CommandQueue();
            clearInterval(this.a_command_unblock_interval);
           
@@ -382,6 +383,7 @@ class Scratch3RobotBlocks {
       }else{
 
          this.runtime.RCA.block_A_CommandQueue();  
+         this.runtime.RCA.blockPowerCommand();
          
          util.yield();
         
