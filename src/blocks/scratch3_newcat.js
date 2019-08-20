@@ -53,9 +53,15 @@ class Scratch3RobotBlocks {
         };
     }
 
+    check_0_and_255(value)
+    {
+            return (value < 0)?0:(value > 255)?255:value;
+
+    }
+
     newcat_set_ana(args,util)
     {
-    this.runtime.ACA.set_anal(Number(args.PWM_PINS),Number(args.NUM));
+    this.runtime.ACA.set_anal(Number(args.PWM_PINS), this.check_0_and_255(Number(args.NUM)));
     }
     newcat_set_dig(args,util)
     {
