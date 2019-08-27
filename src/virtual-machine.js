@@ -60,6 +60,8 @@ class VirtualMachine extends EventEmitter {
         this.OCA = new OttoControlAPI; //modified_by_Yaroslav //not original
         this.ACA = new ArduinoControlAPI; //modified_by_Yaroslav //not original
 
+        this.isFullscreenMode = false;
+
         /**
          * VM runtime, to store blocks, I/O devices, sprites/targets, etc.
          * @type {!Runtime}
@@ -201,6 +203,19 @@ class VirtualMachine extends EventEmitter {
 
 
        return this.DCA;
+    }
+
+    triggerFullscreenMode(){
+
+
+        this.isFullscreenMode = !this.isFullscreenMode;
+    }
+
+    triggerCurrentStepTime(isFullscreen){
+
+        console.warn(`triggerCurrentStepTime isFullscreen: ${isFullscreen}`);
+
+        this.runtime.triggerCurrentStepTime(isFullscreen);
     }
 
     /**

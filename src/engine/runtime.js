@@ -689,9 +689,11 @@ class Runtime extends EventEmitter {
      * In compatibility mode, how rapidly we try to step threads, in ms.
      */
     static get THREAD_STEP_INTERVAL_COMPATIBILITY () {
-       // return 1000 / 30;
+      // return 1000 / 30;
 
         return 4;
+
+       //return 6;
     }
 
     /**
@@ -2291,6 +2293,42 @@ class Runtime extends EventEmitter {
      */
     requestBlocksUpdate () {
         this.emit(Runtime.BLOCKS_NEED_UPDATE);
+    }
+
+    triggerCurrentStepTime(isFullscreen){
+
+        if (isFullscreen){
+
+             let interval = 9;
+
+            this.currentStepTime = interval;   
+            
+        
+            clearInterval(this._steppingInterval);
+
+            this._steppingInterval = setInterval(() => {
+                        this._step();
+                    }, interval);
+
+
+
+        }else{
+
+             let interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
+
+             this.currentStepTime = interval;
+        
+            clearInterval(this._steppingInterval);
+
+            this._steppingInterval = setInterval(() => {
+                        this._step();
+                    }, interval);
+
+        }    
+
+
+      
+
     }
 
     /**
