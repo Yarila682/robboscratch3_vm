@@ -53,6 +53,12 @@ class Scratch3RobotBlocks {
         };
     }
 
+     check_value_out_of_range(value,low,high){
+
+        return (value > high)?high:((value < low)?low:value);
+
+    }
+
     check_0_and_255(value)
     {
             return (value < 0)?0:(value > 255)?255:value;
@@ -90,7 +96,9 @@ class Scratch3RobotBlocks {
 
     newcat_servo(args,util)
     {
-    this.runtime.ACA.servo(Number(args.PIN),Number(args.ANGLE));
+   // this.runtime.ACA.servo(Number(args.PIN),Number(args.ANGLE));
+      let angle = Math.round(Number(args.ANGLE));
+      this.runtime.ACA.servo(Number(args.PIN),this.check_value_out_of_range(angle,-180,180));  
     }
     newcat_play_sound(args,util)
     {
@@ -98,9 +106,11 @@ class Scratch3RobotBlocks {
         if(this.sound_flag==0)
         {
 
+        let note_type =  Math.round(Number(args.NOTE_TYPE));   
+
         this.sound_time = setTimeout(()=>{this.sound_flag=2;},args.NOTE_DURA * 250);
         this.sound_flag=1;
-        this.runtime.ACA.play_sound(this.sounds[Number(args.NOTE_TYPE)],Number(args.NOTE_DURA),Number(args.PIN));
+        this.runtime.ACA.play_sound(this.sounds[this.check_value_out_of_range(note_type,0,83)],Number(args.NOTE_DURA),Number(args.PIN));
         util.yield();
         }
         else if(this.sound_flag==1)
