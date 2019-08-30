@@ -182,6 +182,9 @@ class Runtime extends EventEmitter {
       this.allOtherStuffBeginTime_2 = Date.now();
       this.allOtherStuffEndTime_2 = Date.now();
 
+      this.isFullscreen = false;
+      this.fullscreenInterval = 40;//set this as interval for _step() func in fullscreen mode
+      this.normalInterval = 4;//set this as interval for _step() func in normal mode  //not in use
 
         /**
          * Target management and storage.
@@ -2295,13 +2298,73 @@ class Runtime extends EventEmitter {
         this.emit(Runtime.BLOCKS_NEED_UPDATE);
     }
 
+    setFullscreenInterval(interval){
+
+
+       this.fullscreenInterval = Math.round(Number(interval));
+
+       if (typeof(this.fullscreenInterval) !== 'number') return;
+
+       console.warn(`setFullscreenInterval interval: ${this.fullscreenInterval}`);
+
+        if (this.isFullscreen){
+
+            clearInterval(this._steppingInterval);
+
+            this._steppingInterval = setInterval(() => {
+
+                        this._step();
+
+                    },  this.fullscreenInterval);
+
+        }
+    }
+
+    getFullscreenInterval(){
+
+        return  this.fullscreenInterval;
+    }
+
+    setNormalInterval(interval){
+
+     this.normalInterval = Math.round(Number(interval));
+
+      if (typeof(this.normalInterval) !== 'number') return;
+       
+       console.warn(`setNormalInterval interval: ${this.normalInterval}`);
+
+        if (!this.isFullscreen){
+
+            clearInterval(this._steppingInterval);
+
+            this._steppingInterval = setInterval(() => {
+
+                        this._step();
+
+                    }, this.normalInterval);
+
+        }
+
+    }
+
+    getNormalInterval(){
+
+        return  this.normalInterval;
+    }
+
     triggerCurrentStepTime(isFullscreen){
+
+        this.isFullscreen = isFullscreen;
 
         if (isFullscreen){
 
-             let interval = 9;
+            // let interval = 9;
 
-            this.currentStepTime = interval;   
+            let interval = this.fullscreenInterval;
+
+            this.currentStepTime = interval;  
+
+        
             
         
             clearInterval(this._steppingInterval);
@@ -2314,7 +2377,9 @@ class Runtime extends EventEmitter {
 
         }else{
 
-             let interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
+           //  let interval = Runtime.THREAD_STEP_INTERVAL_COMPATIBILITY;
+
+           let interval =  this.normalInterval;
 
              this.currentStepTime = interval;
         
