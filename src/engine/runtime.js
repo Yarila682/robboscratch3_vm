@@ -185,6 +185,10 @@ class Runtime extends EventEmitter {
       this.isFullscreen = false;
       this.fullscreenInterval = 40;//set this as interval for _step() func in fullscreen mode
       this.normalInterval = 4;//set this as interval for _step() func in normal mode  //not in use
+      this.averageStepDeltaTime = 0;
+      this.avTimeInterval = null;  
+      this.step_time_delta = 0;
+
 
         /**
          * Target management and storage.
@@ -2360,6 +2364,11 @@ class Runtime extends EventEmitter {
 
             // let interval = 9;
 
+            this.fullscreenInterval = /*Math.round(this.step_time_delta); */  Math.round(this.averageStepDeltaTime);
+
+            console.warn(`triggerCurrentStepTime fullscreenInterval: ${this.fullscreenInterval}`);
+
+
             let interval = this.fullscreenInterval;
 
             this.currentStepTime = interval;  
@@ -2389,11 +2398,20 @@ class Runtime extends EventEmitter {
                         this._step();
                     }, interval);
 
+
+
+
         }    
 
 
       
 
+    }
+
+    calculateAverageStepDelta(){
+
+
+        
     }
 
     /**
@@ -2412,6 +2430,44 @@ class Runtime extends EventEmitter {
             this._step();
         }, interval);
         this.emit(Runtime.RUNTIME_STARTED);
+
+        /////////////////////av_time
+     
+      const performance = typeof window === 'object' && window.performance;
+
+        let time_1 = performance.now();
+        let time_2 = performance.now();
+        let counter = 0;
+        let time_delta = 0;
+        let time_delta_sum = 0;
+
+
+
+
+       this.avTimeInterval = setInterval(() => {
+
+          time_2 = performance.now();
+          time_delta = time_2 - time_1;
+          time_1 = performance.now();
+
+          time_delta_sum+=time_delta;
+          counter++;
+
+          if (counter>=100){
+              this.averageStepDeltaTime = time_delta_sum / counter;
+              counter = 0;
+
+              time_delta_sum = 0;
+
+              //this.setFullscreenInterval(this.averageStepDeltaTime);
+
+          }
+
+        },0);
+
+
+        ///////////////////////////////////end of av_time
+
     }
 
     /**
