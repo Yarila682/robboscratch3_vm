@@ -187,6 +187,7 @@ class Runtime extends EventEmitter {
       this.normalInterval = 4;//set this as interval for _step() func in normal mode  //not in use
       this.averageStepDeltaTime = 0;
       this.avTimeInterval = null;  
+      this.maxAverageStepDeltaTime = 0;
       this.step_time_delta = 0;
 
 
@@ -2364,7 +2365,7 @@ class Runtime extends EventEmitter {
 
             // let interval = 9;
 
-            this.fullscreenInterval = /*Math.round(this.step_time_delta); */  Math.round(this.averageStepDeltaTime);
+            this.fullscreenInterval = this.maxAverageStepDeltaTime; //Math.round(this.averageStepDeltaTime);
 
             console.warn(`triggerCurrentStepTime fullscreenInterval: ${this.fullscreenInterval}`);
 
@@ -2408,10 +2409,10 @@ class Runtime extends EventEmitter {
 
     }
 
-    calculateAverageStepDelta(){
+    setMaxAverageStepDeltaTime(time){
 
 
-        
+        this.maxAverageStepDeltaTime = time;
     }
 
     /**
@@ -2453,8 +2454,14 @@ class Runtime extends EventEmitter {
           time_delta_sum+=time_delta;
           counter++;
 
-          if (counter>=100){
-              this.averageStepDeltaTime = time_delta_sum / counter;
+          if (counter>=300){
+              this.averageStepDeltaTime = Math.round(time_delta_sum / counter);
+             
+              if (this.averageStepDeltaTime > this.maxAverageStepDeltaTime){
+
+                     this.maxAverageStepDeltaTime = this.averageStepDeltaTime;
+              }
+
               counter = 0;
 
               time_delta_sum = 0;
