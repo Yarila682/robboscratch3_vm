@@ -340,7 +340,7 @@ class Scratch3RobotBlocks {
 
     robot_motors_off(args, util){
 
-  //    console.log(`Robot stop!`);
+    // console.log(`Robot stop!`);
 
   // setTimeout(function(runtime,self){
   //
@@ -369,6 +369,8 @@ class Scratch3RobotBlocks {
 
 
     if (this.runtime.RCA.isRobotReadyToAcceptCommand()){
+
+          //console.log(`Robot stop!`);
 
            this.runtime.RCA.setRobotPower(0,0,0);
            this.command_sent = true;
@@ -789,6 +791,9 @@ class Scratch3RobotBlocks {
 
     robot_motors_on_for_steps(args, util){
 
+   //   console.log(`robot_motors_on_for_steps`);
+
+
       // var steps =   this.check_65535(args.STEPS);
       //
       //
@@ -819,14 +824,14 @@ class Scratch3RobotBlocks {
 
         if (  (stepsDeltaLeft < util.stackFrame.steps  ) && (stepsDeltaRight < util.stackFrame.steps) && (!this.need_to_stop) ) {  // TODO: сделать корректную проверку для робота без энкодеров
 
-      //      console.log(`robot_motors_on_for_steps stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+         //  console.log(`robot_motors_on_for_steps stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
             util.yield();
 
           } else{
 
 
-        //        console.log(`robot_motors_on_for_steps  exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
+             //   console.log(`robot_motors_on_for_steps  exit function stepsDeltaLeft: ${stepsDeltaLeft} stepsDeltaRight: ${stepsDeltaRight}`);
 
                 util.stackFrame.steps = null;
 
