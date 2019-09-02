@@ -189,6 +189,7 @@ class Runtime extends EventEmitter {
       this.avTimeInterval = null;  
       this.maxAverageStepDeltaTime = 0;
       this.step_time_delta = 0;
+      this.settingsSaved = false;
 
 
         /**
@@ -2308,6 +2309,8 @@ class Runtime extends EventEmitter {
 
        this.fullscreenInterval = Math.round(Number(interval));
 
+       this.maxAverageStepDeltaTime = this.fullscreenInterval;
+
        if (typeof(this.fullscreenInterval) !== 'number') return;
 
        console.warn(`setFullscreenInterval interval: ${this.fullscreenInterval}`);
@@ -2355,6 +2358,16 @@ class Runtime extends EventEmitter {
     getNormalInterval(){
 
         return  this.normalInterval;
+    }
+
+    clearAvTimeInterval(){
+
+        clearInterval(this.avTimeInterval);
+    }
+
+    setSettingsSaved(){
+
+        this.settingsSaved = true;
     }
 
     triggerCurrentStepTime(isFullscreen){
@@ -2411,6 +2424,7 @@ class Runtime extends EventEmitter {
 
     setMaxAverageStepDeltaTime(time){
 
+        if (this.settingsSaved) return;
 
         this.maxAverageStepDeltaTime = time;
     }
