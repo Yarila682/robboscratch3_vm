@@ -157,18 +157,26 @@ class Scratch3RobotBlocks {
             const timeElapsed = util.stackFrame.timer.timeElapsed();
             if (timeElapsed < util.stackFrame.duration * 1000) {
 
-              if (timeElapsed % 200 == 0){
+             // if (timeElapsed % 200 == 0){
 
                   //    console.log(`robot_motors_on_for_seconds power_left: ${this.power_left} power_right: ${this.power_right} timeElapsed: ${timeElapsed} duration:${ util.stackFrame.duration * 1000} `);
 
-                      this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
+                     // this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
 
-              }
+             // }
+
+               
+           if (this.runtime.RCA.isRobotReadyToAcceptCommand()){
+
+              this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
+          
+            }
 
                 util.yield();
 
             } else {
 
+                util.stackFrame.timer = undefined;
                 this.runtime.RCA.setRobotPower(0,0,0);
             }
         } else {
@@ -189,10 +197,13 @@ class Scratch3RobotBlocks {
             clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);
             clearInterval(this.motors_on_interval);
 
+            this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
+
 
             this.robot_motors_on_for_seconds_timeout_stop =   setTimeout(function(runtime){
 
           //     console.log(`Robot stop!`);
+               util.stackFrame.timer = undefined;
                runtime.RCA.setRobotPower(0,0,0);
              },util.stackFrame.duration*1000,this.runtime);
 
