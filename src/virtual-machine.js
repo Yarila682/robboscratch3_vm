@@ -445,7 +445,14 @@ class VirtualMachine extends EventEmitter {
     saveProjectSb3_auto () {
         const soundDescs = serializeSounds(this.runtime);
         const costumeDescs = serializeCostumes(this.runtime);
-        const projectJson = this.toJSON();
+
+        const serializedProject = sb3.serialize(this.runtime);//added_by_Yaroslav
+
+        if (serializedProject.targets.length == 0) return; //bad state; causes crashes
+
+        const projectJson  =  StringUtil.stringify(serializedProject);//added_by_Yaroslav
+
+       // const projectJson = this.toJSON(); //original
 
         // TODO want to eventually move zip creation out of here, and perhaps
         // into scratch-storage
