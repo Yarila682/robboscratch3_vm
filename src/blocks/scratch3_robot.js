@@ -166,20 +166,44 @@ class Scratch3RobotBlocks {
              // }
 
                
-           if (this.runtime.RCA.isRobotReadyToAcceptCommand()){
+          //  if (this.runtime.RCA.isRobotReadyToAcceptCommand()){
 
-              this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
+          //     this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
           
-            }
+          //   }
 
                 util.yield();
 
             } else {
 
-                util.stackFrame.timer = undefined;
-                this.runtime.RCA.setRobotPower(0,0,0);
+               // util.stackFrame.timer = undefined;
+               // this.runtime.RCA.setRobotPower(0,0,0);
+
+                if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){
+
+                    this.runtime.RCA.block_A_CommandQueue(); 
+                    util.yield();
+                    return;
+
+                }else{
+                  
+                    util.stackFrame.timer = undefined;
+                    this.runtime.RCA.setRobotPower(0,0,0);
+                    this.runtime.RCA.unblock_A_CommandQueue(); 
+
+                }
+
             }
         } else {
+
+            if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){
+
+                    this.runtime.RCA.block_A_CommandQueue(); 
+                    util.yield();
+                    return;
+
+            }
+
             // First time: save data for future use.
             util.stackFrame.timer = new Timer();
             util.stackFrame.timer.start();
@@ -198,14 +222,15 @@ class Scratch3RobotBlocks {
             clearInterval(this.motors_on_interval);
 
             this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
+            this.runtime.RCA.unblock_A_CommandQueue(); 
 
 
-            this.robot_motors_on_for_seconds_timeout_stop =   setTimeout(function(runtime){
+          //   this.robot_motors_on_for_seconds_timeout_stop =   setTimeout(function(runtime){
 
-          //     console.log(`Robot stop!`);
-               util.stackFrame.timer = undefined;
-               runtime.RCA.setRobotPower(0,0,0);
-             },util.stackFrame.duration*1000,this.runtime);
+          // //     console.log(`Robot stop!`);
+          //      util.stackFrame.timer = undefined;
+          //      runtime.RCA.setRobotPower(0,0,0);
+          //    },util.stackFrame.duration*1000,this.runtime);
 
             util.yield();
         }
@@ -854,6 +879,18 @@ class Scratch3RobotBlocks {
 
             clearInterval(this.motors_on_interval);
 
+            if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){
+
+                this.runtime.RCA.block_A_CommandQueue(); 
+                util.yield();
+                return;
+
+            }else{
+               
+               this.runtime.RCA.unblock_A_CommandQueue(); 
+
+            }
+
           util.stackFrame.steps = this.check_65535(args.STEPS);
 
           this.stepsInitValueLeft  =  this.runtime.RCA.getLeftPath();
@@ -932,6 +969,19 @@ class Scratch3RobotBlocks {
 
         }
     } else {
+
+
+           if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){
+
+                this.runtime.RCA.block_A_CommandQueue(); 
+                util.yield();
+                return;
+
+            }else{
+               
+               this.runtime.RCA.unblock_A_CommandQueue(); 
+
+            }
 
         util.stackFrame.steps = this.check_65535(Math.round(args.DEGREES / DEGREE_RATIO))
         this.stepsInitValueLeft  =  this.runtime.RCA.getLeftPath();
@@ -1013,6 +1063,18 @@ class Scratch3RobotBlocks {
 
               }
           } else {
+
+              if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){
+
+                this.runtime.RCA.block_A_CommandQueue(); 
+                util.yield();
+                return;
+
+              }else{
+               
+               this.runtime.RCA.unblock_A_CommandQueue(); 
+
+              }
 
               util.stackFrame.steps = this.check_65535(Math.round(args.DEGREES / DEGREE_RATIO))
               this.stepsInitValueLeft  =  this.runtime.RCA.getLeftPath();

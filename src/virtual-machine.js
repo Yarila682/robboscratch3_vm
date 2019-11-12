@@ -454,8 +454,7 @@ class VirtualMachine extends EventEmitter {
 
        // const projectJson = this.toJSON(); //original
 
-        // TODO want to eventually move zip creation out of here, and perhaps
-        // into scratch-storage
+        
         var infa = {};
         infa.projectJson=projectJson;
         infa.costumeDescs=costumeDescs;
