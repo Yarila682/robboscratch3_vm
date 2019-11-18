@@ -54,11 +54,10 @@ class Scratch3LaboratoryBlocks {
     }
 
       lab_led_turn_on(args , util){
-            if(this.first_coming1)
+           
+       if (this.runtime.RCA.isLabReadyToAcceptCommand())
             {
-              this.first_coming1 = false;
-              setTimeout(()=>{this.timer_dlya_blocka1 = true;},TIME_DLYA_DEISTVIYA);
-      //  console.log(`lab_turn_led_on led_position: ${args.LED_NUMS}`);
+             
 
         try {
 
@@ -124,24 +123,22 @@ class Scratch3LaboratoryBlocks {
           default:
 
         }
-        util.yield();
-        return;
+
+        this.runtime.LCA.unblock_A_CommandQueue();
+
       }
-      else
-      {
-        if(!this.timer_dlya_blocka1)
-        {util.yield(); return;}
-        this.timer_dlya_blocka1 = false;
-        this.first_coming1 = true;
-      }
+       else{
+              this.runtime.RCA.block_A_CommandQueue();  
+              util.yield();
+          }
       }
 
 
       lab_led_turn_off(args , util){
-        if(this.first_coming2)
+        
+      if (this.runtime.RCA.isLabReadyToAcceptCommand())
         {
-          this.first_coming2 = false;
-          setTimeout(()=>{this.timer_dlya_blocka2 = true;},TIME_DLYA_DEISTVIYA);
+        
 
     //    console.log(`lab_turn_led_off led_position: ${args.LED_NUMS}`);
 
@@ -208,17 +205,14 @@ class Scratch3LaboratoryBlocks {
           default:
 
         }
-          util.yield();
-          return ;
-}
-        else
-        {
-          if(!this.timer_dlya_blocka2)
-          {util.yield();return;}
-          this.timer_dlya_blocka2 = false;
-          this.first_coming2 = true;
-        }
+         this.runtime.LCA.unblock_A_CommandQueue();
+
       }
+       else{
+              this.runtime.RCA.block_A_CommandQueue();  
+              util.yield();
+          }
+    }
 
       lab_color_led_turn_on(args,util){
         if(this.first_coming3)
