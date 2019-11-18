@@ -55,7 +55,7 @@ class Scratch3LaboratoryBlocks {
 
       lab_led_turn_on(args , util){
            
-       if (this.runtime.RCA.isLabReadyToAcceptCommand())
+       if (this.runtime.LCA.isLabReadyToAcceptCommand())
             {
              
 
@@ -128,7 +128,7 @@ class Scratch3LaboratoryBlocks {
 
       }
        else{
-              this.runtime.RCA.block_A_CommandQueue();  
+              this.runtime.LCA.block_A_CommandQueue();  
               util.yield();
           }
       }
@@ -136,7 +136,7 @@ class Scratch3LaboratoryBlocks {
 
       lab_led_turn_off(args , util){
         
-      if (this.runtime.RCA.isLabReadyToAcceptCommand())
+      if (this.runtime.LCA.isLabReadyToAcceptCommand())
         {
         
 
@@ -209,91 +209,77 @@ class Scratch3LaboratoryBlocks {
 
       }
        else{
-              this.runtime.RCA.block_A_CommandQueue();  
+              this.runtime.LCA.block_A_CommandQueue();  
               util.yield();
           }
     }
 
       lab_color_led_turn_on(args,util){
-        if(this.first_coming3)
-        {
-          this.first_coming3 = false;
-          setTimeout(()=>{this.timer_dlya_blocka3 = true;},TIME_DLYA_DEISTVIYA);
-          //  console.log(`lab_color_led_turn_on led: ${args.LED_COLORS}`);
+        
+        if (this.runtime.LCA.isLabReadyToAcceptCommand())
+           {
+
+                //  console.log(`lab_color_led_turn_on led: ${args.LED_COLORS}`);
 
               this.runtime.LCA.turnColorLedOn(args.LED_COLORS,0);
-              util.yield();
-              return ;
-    }
-            else
-            {
-              if(!this.timer_dlya_blocka3)
-              {util.yield();return;}
-              this.timer_dlya_blocka3 = false;
-              this.first_coming3 = true;
-            }
-          }
+              this.runtime.LCA.unblock_A_CommandQueue();
+
+           }
+           else{
+                  this.runtime.LCA.block_A_CommandQueue();  
+                  util.yield();
+               }
+        }
 
 
       lab_color_led_turn_off(args,util){
-        if(this.first_coming4)
-        {
-          this.first_coming4 = false;
-          setTimeout(()=>{this.timer_dlya_blocka4 = true;},TIME_DLYA_DEISTVIYA);
-          //  console.log(`lab_color_led_turn_off led: ${args.LED_COLORS}`);
-
-            this.runtime.LCA.turnColorLedOff(args.LED_COLORS,0);
-            util.yield();
-            return ;
-  }
-          else
+       
+        if (this.runtime.LCA.isLabReadyToAcceptCommand())
           {
-            if(!this.timer_dlya_blocka4)
-            {util.yield();return;}
-            this.timer_dlya_blocka4 = false;
-            this.first_coming4 = true;
+          
+          
+            //  console.log(`lab_color_led_turn_off led: ${args.LED_COLORS}`);
+
+              this.runtime.LCA.turnColorLedOff(args.LED_COLORS,0);
+              this.runtime.LCA.unblock_A_CommandQueue();
           }
-        }
+          else{
+                  this.runtime.LCA.block_A_CommandQueue();  
+                  util.yield();
+              }
+      }
 
       lab_digital_pin_set_on_off(args,util){
-        if(this.first_coming5)
-        {
-          this.first_coming5 = false;
-          setTimeout(()=>{this.timer_dlya_blocka5 = true;},TIME_DLYA_DEISTVIYA);
+      
+        if (this.runtime.LCA.isLabReadyToAcceptCommand())
+          {
+        
         //  console.log(`lab_digital_pin_set_on_off pin: ${args.LAB_DIGITAL_PIN} pin_state: ${args.LAB_DIGITAL_PIN_STATE} `);
 
             this.runtime.LCA.setDigitalOnOff(args.LAB_DIGITAL_PIN,args.LAB_DIGITAL_PIN_STATE,0);
-            util.yield();
-            return ;
-  }
-          else
-          {
-            if(!this.timer_dlya_blocka5)
-            {util.yield();return;}
-            this.timer_dlya_blocka5 = false;
-            this.first_coming5 = true;
-          }
+            this.runtime.LCA.unblock_A_CommandQueue();
+         }
+          else{
+                  this.runtime.LCA.block_A_CommandQueue();  
+                  util.yield();
+              }
         }
 
 
       lab_digital_pin_set_pwm_value(args,util){
-        if(this.first_coming6)
-        {
-          this.first_coming6 = false;
-          setTimeout(()=>{this.timer_dlya_blocka6 = true;},TIME_DLYA_DEISTVIYA);
-      //  console.log(`lab_digital_pin_set_pwm_value pin: ${args.LAB_DIGITAL_PIN} pwm_value: ${args.PWM_VALUE} `);
+       
+        if (this.runtime.LCA.isLabReadyToAcceptCommand())
+         {
+          
+            //  console.log(`lab_digital_pin_set_pwm_value pin: ${args.LAB_DIGITAL_PIN} pwm_value: ${args.PWM_VALUE} `);
 
-          this.runtime.LCA.setDigitalOnOff(args.LAB_DIGITAL_PIN,args.PWM_VALUE,0);
-          util.yield();
-          return ;
-}
-        else
-        {
-          if(!this.timer_dlya_blocka6)
-          {util.yield();return;}
-          this.timer_dlya_blocka6 = false;
-          this.first_coming6 = true;
+            this.runtime.LCA.setDigitalPWM(args.LAB_DIGITAL_PIN,args.PWM_VALUE,0);
+            this.runtime.LCA.unblock_A_CommandQueue();
         }
+        else{
+                  this.runtime.LCA.block_A_CommandQueue();  
+                  util.yield();
+            }
       }
 
       lab_sensor(args){
@@ -369,35 +355,31 @@ class Scratch3LaboratoryBlocks {
       }
 
       lab_play_note(args,util){
-        if(this.first_coming7)
-        {
-          this.first_coming7 = false;
-          setTimeout(()=>{this.timer_dlya_blocka7 = true;},TIME_DLYA_DEISTVIYA*2);
-    //    console.log(`lab_play_note: ${args.LAB_NOTE}`);
+       
+        if (this.runtime.LCA.isLabReadyToAcceptCommand())
+         {
+       
+            //    console.log(`lab_play_note: ${args.LAB_NOTE}`);
 
-        let note = args.LAB_NOTE;
+                let note = args.LAB_NOTE;
 
-        if (isNaN(note)) return;
+                if (isNaN(note)) return;
 
-       note = Math.round(args.LAB_NOTE);
+                note = Math.round(args.LAB_NOTE);
 
-        note = (note < 48)?48:note;
-        note = (note  > 72)?72:note;
+                note = (note < 48)?48:note;
+                note = (note  > 72)?72:note;
 
-        note = note - 48;
+                note = note - 48;
 
 
-        this.runtime.LCA.labPlayNote(0,note);
-        util.yield();
-        return ;
-}
-      else
-      {
-        if(!this.timer_dlya_blocka7)
-        {util.yield();return;}
-        this.timer_dlya_blocka7 = false;
-        this.first_coming7 = true;
-      }
+                this.runtime.LCA.labPlayNote(0,note);
+                this.runtime.LCA.unblock_A_CommandQueue();
+          }
+          else{
+                  this.runtime.LCA.block_A_CommandQueue();  
+                  util.yield();
+          }
     }
 
   }
