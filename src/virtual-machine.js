@@ -448,6 +448,8 @@ class VirtualMachine extends EventEmitter {
 
         const serializedProject = sb3.serialize(this.runtime);//added_by_Yaroslav
 
+        if (typeof(serializedProject.targets) === 'undefined') return;
+
         if (serializedProject.targets.length == 0) return; //bad state; causes crashes
 
         const projectJson  =  StringUtil.stringify(serializedProject);//added_by_Yaroslav
