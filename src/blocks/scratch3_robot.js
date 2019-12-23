@@ -47,7 +47,7 @@ class Scratch3RobotBlocks {
         this.time_sent2 = Date.now();
         this.time_sent3 = Date.now();
 
-       
+       this.robot_motors_on_for_seconds_end_timeout = null;
 
 
         this.runtime.RCA.registerRobotIsScratchduinoCallback(() => {
@@ -102,99 +102,52 @@ class Scratch3RobotBlocks {
         };
     }
 
-    robot_motors_on_for_seconds (args, util) {
+  robot_motors_on_for_seconds (args, util) {
 
+      clearTimeout(this.robot_motors_on_for_seconds_end_timeout);
 
-        this.is_motors_on_active = false;
+       this.robot_motors_on_for_seconds_end_timeout = setTimeout(() => {
+          this.runtime.RCA.setRobotPower(0,0,0);
+       }, 40);
 
-
-        if (util.stackFrame.timer) {
-
-            const timeElapsed = util.stackFrame.timer.timeElapsed();
-            if (timeElapsed < util.stackFrame.duration * 1000) {
-
-             // if (timeElapsed % 200 == 0){
-
-                  //    console.log(`robot_motors_on_for_seconds power_left: ${this.power_left} power_right: ${this.power_right} timeElapsed: ${timeElapsed} duration:${ util.stackFrame.duration * 1000} `);
-
-                     // this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
-
-             // }
-
-               
-          //  if (this.runtime.RCA.isRobotReadyToAcceptCommand()){
-
-          //     this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
-          
-          //   }
-
-                util.yield();
-
-            } else {
-
-               // util.stackFrame.timer = undefined;
-               // this.runtime.RCA.setRobotPower(0,0,0);
-
-                if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){
-
-                    this.runtime.RCA.block_A_CommandQueue(); 
-                    util.yield();
-                    return;
-
-                }else{
-                  
-                    util.stackFrame.timer = undefined;
-                    this.runtime.RCA.setRobotPower(0,0,0);
-                    this.runtime.RCA.unblock_A_CommandQueue(); 
-
-                }
-
-            }
-        } else {
-
-            if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){
-
-                    this.runtime.RCA.block_A_CommandQueue(); 
-                    util.yield();
-                    return;
-
-            }
-
-            // First time: save data for future use.
-            util.stackFrame.timer = new Timer();
-            util.stackFrame.timer.start();
-            util.stackFrame.duration = Cast.toNumber(args.SECONDS);
-
-
-
-
-            if (util.stackFrame.duration <= 0) {
-
-                return;
-            }
-
-
-            clearTimeout(this.robot_motors_on_for_seconds_timeout_stop);
-            clearInterval(this.motors_on_interval);
-
-            this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
-            this.runtime.RCA.unblock_A_CommandQueue(); 
-
-
-          //   this.robot_motors_on_for_seconds_timeout_stop =   setTimeout(function(runtime){
-
-          // //     console.log(`Robot stop!`);
-          //      util.stackFrame.timer = undefined;
-          //      runtime.RCA.setRobotPower(0,0,0);
-          //    },util.stackFrame.duration*1000,this.runtime);
-
-            util.yield();
-        }
-
-
-
-
-    }
+      this.is_motors_on_active = false;
+      if (util.stackFrame.timer) {
+          const timeElapsed = util.stackFrame.timer.timeElapsed();
+          if (timeElapsed < util.stackFrame.duration * 1000) {
+              util.yield();
+          }
+          else {
+              if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){
+                  this.runtime.RCA.block_A_CommandQueue();
+                  util.yield();
+                  return;
+              }
+              else{      
+                  util.stackFrame.timer = undefined;
+                  clearTimeout(this.robot_motors_on_for_seconds_end_timeout);
+                  this.runtime.RCA.setRobotPower(0,0,0);
+                  this.runtime.RCA.unblock_A_CommandQueue();
+              }
+          }
+      }
+      else {
+          if (!this.runtime.RCA.isRobotReadyToAcceptCommand()){
+                  this.runtime.RCA.block_A_CommandQueue();
+                  util.yield();
+                  return;
+          }
+          util.stackFrame.timer = new Timer();
+          util.stackFrame.timer.start();
+          util.stackFrame.duration = Cast.toNumber(args.SECONDS);
+          if (util.stackFrame.duration <= 0) {
+              return;
+          }
+          clearInterval(this.motors_on_interval);
+          this.runtime.RCA.setRobotPower(this.power_left,this.power_right,0);
+          this.runtime.RCA.unblock_A_CommandQueue();
+          util.yield();
+      }
+  }
 
     robot_motors_on(args, util){
 
