@@ -64,7 +64,7 @@ const CORE_EXTENSIONS = [
     "claw",
     "rgb",
     "button",
-    
+
     "newcat",
     "high",
     "sosonic",

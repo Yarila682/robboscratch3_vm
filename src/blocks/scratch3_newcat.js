@@ -14,7 +14,7 @@ class Scratch3RobotBlocks {
          this.timer=0;
          this.first_a=1;
          this.first_d=1;
-
+         this.first_c=0;
           this.sounds=[
 33,35,37,39,41,44,46,49,52,55,58,62,
 65, 69, 73, 78, 82, 87, 93, 98, 104, 110, 117, 123,
@@ -49,7 +49,9 @@ class Scratch3RobotBlocks {
             newcat_set_pult:this.newcat_set_pult,
             newcat_set_text:this.newcat_set_text,
             newcat_init_lcd:this.newcat_init_lcd,
-            newcat_set_kursor:this.newcat_set_kursor
+            newcat_set_kursor:this.newcat_set_kursor,
+            newcat_set_shag:this.newcat_set_shag,
+            newcat_shag_init:this.newcat_shag_init
         };
     }
 
@@ -64,7 +66,29 @@ class Scratch3RobotBlocks {
             return (value < 0)?0:(value > 255)?255:value;
 
     }
-
+    newcat_set_shag(args,util)
+    {
+    if(this.first_c==0)
+    {
+    let time = Number(args.SPEED);
+    if(time>24)time=25;
+    setTimeout(()=>{this.first_c=2;},(25-time)*Number(args.SHAG));
+    this.first_c=1;
+    this.runtime.ACA.set_shag(Number(args.SPEED), Number(args.SHAG));
+    util.yield();
+    }
+    else if(this.first_c==1)
+    {
+    util.yield();
+    }
+    else {
+    this.first_c=0;
+    }
+    }
+    newcat_shag_init(args,util)
+    {
+    this.runtime.ACA.init_shag(Number(args.PIN1),Number(args.PIN2),Number(args.PIN3),Number(args.PIN4),Number(args.SHAG_TYPE));
+    }
     newcat_set_ana(args,util)
     {
     this.runtime.ACA.set_anal(Number(args.PWM_PINS), this.check_0_and_255(Number(args.NUM)));
@@ -98,7 +122,7 @@ class Scratch3RobotBlocks {
     {
    // this.runtime.ACA.servo(Number(args.PIN),Number(args.ANGLE));
       let angle = Math.round(Number(args.ANGLE));
-      this.runtime.ACA.servo(Number(args.PIN),this.check_value_out_of_range(angle,-180,180));  
+      this.runtime.ACA.servo(Number(args.PIN),this.check_value_out_of_range(angle,-180,180));
     }
     newcat_play_sound(args,util)
     {
@@ -106,7 +130,7 @@ class Scratch3RobotBlocks {
         if(this.sound_flag==0)
         {
 
-        let note_type =  Math.round(Number(args.NOTE_TYPE));   
+        let note_type =  Math.round(Number(args.NOTE_TYPE));
 
         this.sound_time = setTimeout(()=>{this.sound_flag=2;},args.NOTE_DURA * 250);
         this.sound_flag=1;
