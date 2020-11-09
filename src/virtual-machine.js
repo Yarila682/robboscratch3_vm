@@ -77,7 +77,10 @@ class VirtualMachine extends EventEmitter {
          * @type {Target}
          */
         this.editingTarget = null;
-
+        this.runtime.sens_list = ["-1","-1","-1","-1","-1"];
+        this.runtime.sim_ac =false;
+        this.runtime.going=false;
+        this.runtime.util={};
         /**
          * The currently dragging target, for redirecting IO data.
          * @type {Target}
@@ -167,6 +170,7 @@ class VirtualMachine extends EventEmitter {
         this.flyoutBlockListener = this.flyoutBlockListener.bind(this);
         this.monitorBlockListener = this.monitorBlockListener.bind(this);
         this.variableListener = this.variableListener.bind(this);
+
     }
 
     getRCA(){
@@ -261,6 +265,7 @@ class VirtualMachine extends EventEmitter {
     stopAll () {
         this.runtime.stopAll();
     }
+
 
     /**
      * Clear out current running project data.
@@ -456,7 +461,7 @@ class VirtualMachine extends EventEmitter {
 
        // const projectJson = this.toJSON(); //original
 
-        
+
         var infa = {};
         infa.projectJson=projectJson;
         infa.costumeDescs=costumeDescs;
