@@ -156,7 +156,24 @@ class Scratch3RobotBlocks {
     }
     newcat_set_text(args,util)
     {
-      this.runtime.ACA.set_text(args.MESSAGE);
+
+      // console.warn(args.MESSAGE);
+      // console.warn(typeof(args.MESSAGE));
+
+      try {
+        
+        var msg = Cast.toString(args.MESSAGE);
+
+        console.warn(msg);
+        console.warn(typeof(msg));
+
+      } catch (error) {
+
+        console.error(`${error}`);
+        
+      }
+   
+      this.runtime.ACA.set_text(msg);
     }
     newcat_set_kursor(args,util)
     {
