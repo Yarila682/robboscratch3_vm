@@ -64,6 +64,12 @@ class Scratch3RobotBlocks {
 
 
         });
+
+        this.runtime.are_motors_inverted = false; 
+
+        this.runtime.left_motor_inverted = false; 
+        this.runtime.right_motor_inverted = false; 
+
         this.runtime.sim_ac=false;
         this.runtime.going=false;
         this.kW=0.01; // шаг движения робота
@@ -142,6 +148,7 @@ class Scratch3RobotBlocks {
   }
 
   robot_motors_on_for_seconds (args, util) {
+
 
       clearTimeout(this.robot_motors_on_for_seconds_end_timeout);
        this.robot_motors_on_for_seconds_end_timeout = setTimeout(() => {
@@ -291,8 +298,8 @@ class Scratch3RobotBlocks {
   robot_motors_off(args, util){
       clearInterval(this.sim_int);
       this.last_util=util;
-      console.warn(util);
-      console.warn(this.last_util);
+     // console.warn(util);
+     // console.warn(this.last_util);
       if(!this.runtime.sim_ac){
         this.runtime.going=false;
         clearInterval(this.motors_on_interval);
@@ -316,6 +323,11 @@ class Scratch3RobotBlocks {
 
   update_power_using_direction(direction){
 
+      // if ( this.runtime.are_motors_inverted){
+
+      //   console.warn("Motors inverted ! ");
+      // }
+
       switch (direction) {
 
         case "direction_forward":
@@ -325,6 +337,24 @@ class Scratch3RobotBlocks {
             this.power_right  =   Math.round(this.power_in_percent_right * 0.63);
             this.sim_pl=Math.round(this.power_in_percent_left * 0.63);
             this.sim_pr=Math.round(this.power_in_percent_right * 0.63);
+
+            if ( this.runtime.left_motor_inverted){
+
+              //console.warn("Left motor inverted from forward to backward! ");
+
+              this.power_left   =   Math.round(this.power_in_percent_left * 0.63) +  64;
+             // this.power_right  =   Math.round(this.power_in_percent_right * 0.63) +  64;
+            }
+
+            if ( this.runtime.right_motor_inverted){
+
+             // console.warn("Right motor inverted from forward to backward! ");
+
+              //this.power_left   =   Math.round(this.power_in_percent_left * 0.63) +  64;
+              this.power_right  =   Math.round(this.power_in_percent_right * 0.63) +  64;
+            }
+
+
           break;
 
           case "direction_backward":
@@ -334,6 +364,23 @@ class Scratch3RobotBlocks {
             this.power_right  =   Math.round(this.power_in_percent_right * 0.63) +  64;
             this.sim_pl=-Math.round(this.power_in_percent_left * 0.63);
             this.sim_pr=-Math.round(this.power_in_percent_right * 0.63);
+
+            if ( this.runtime.left_motor_inverted){
+
+             // console.warn("Left Motor inverted from backward to  forward! ");
+
+              this.power_left   =   Math.round(this.power_in_percent_left * 0.63);
+              //this.power_right  =   Math.round(this.power_in_percent_right * 0.63);
+            }
+
+            if ( this.runtime.right_motor_inverted){
+
+             // console.warn("Right Motor inverted from backward to  forward! ");
+
+              //this.power_left   =   Math.round(this.power_in_percent_left * 0.63);
+              this.power_right  =   Math.round(this.power_in_percent_right * 0.63);
+            }
+
           break;
 
           case "direction_left":
@@ -343,6 +390,23 @@ class Scratch3RobotBlocks {
             this.power_right    =   Math.round(this.power_in_percent_right * 0.63);
             this.sim_pl=-Math.round(this.power_in_percent_left * 0.63);
             this.sim_pr=Math.round(this.power_in_percent_right * 0.63);
+
+            if ( this.runtime.left_motor_inverted){
+
+             // console.warn("Left Motor  inverted from left to  right! ");
+
+              this.power_left   =   Math.round(this.power_in_percent_left * 0.63);
+             
+            }
+
+            if ( this.runtime.right_motor_inverted){
+
+             // console.warn("Right Motor inverted from left to  right! ");
+
+             
+              this.power_right  =   Math.round(this.power_in_percent_right * 0.63) + 64;
+            }
+
           break;
 
           case "direction_right":
@@ -352,6 +416,22 @@ class Scratch3RobotBlocks {
             this.power_right  =   Math.round(this.power_in_percent_right * 0.63) +  64;
             this.sim_pl=Math.round(this.power_in_percent_left * 0.63);
             this.sim_pr=-Math.round(this.power_in_percent_right * 0.63);
+
+            if ( this.runtime.left_motor_inverted){
+
+             // console.warn("Left Motor inverted from right to  left! ");
+
+              this.power_left   =   Math.round(this.power_in_percent_left * 0.63) + 64;
+             
+            }
+
+            if ( this.runtime.right_motor_inverted){
+
+             // console.warn("Right Motor inverted from right to  left! ");
+
+              this.power_right  =   Math.round(this.power_in_percent_right * 0.63);
+            }
+
           break;
         default:
       }
@@ -510,7 +590,7 @@ return 100;
            sensor_data = this.robot_set_sens(util,1);
            }
            else
-           sensor_data = this.runtime.RCA.getSensorData(0);
+           sensor_data = this.runtime.RCA.getSensorData(1);
            break;
 
           case "sensor3":
@@ -519,7 +599,7 @@ return 100;
           sensor_data = this.robot_set_sens(util,2);
           }
           else
-          sensor_data = this.runtime.RCA.getSensorData(0);
+          sensor_data = this.runtime.RCA.getSensorData(2);
           break;
 
           case "sensor4":
@@ -528,7 +608,7 @@ return 100;
           sensor_data = this.robot_set_sens(util,3);
           }
           else
-          sensor_data = this.runtime.RCA.getSensorData(0);
+          sensor_data = this.runtime.RCA.getSensorData(3);
           break;
 
          case "sensor5":
@@ -537,7 +617,7 @@ return 100;
          sensor_data = this.robot_set_sens(util,4);
          }
          else
-         sensor_data = this.runtime.RCA.getSensorData(0);
+         sensor_data = this.runtime.RCA.getSensorData(4);
          break;
 
         case "sensor_trip_meter_left":
@@ -687,6 +767,14 @@ return 100;
 
           this.power_left   =   Math.round(this.power_in_percent_left * 0.63);
 
+          if ( this.runtime.left_motor_inverted){
+
+           // console.warn("Left motor inverted from forward to backward! ");
+
+            this.power_left   =   Math.round(this.power_in_percent_left * 0.63) +  64;
+          }
+
+
 
         break;
 
@@ -695,6 +783,13 @@ return 100;
 
           this.power_left   =   Math.round(this.power_in_percent_left * 0.63) +  64;
           this.sim_pl=-Math.round(this.power_in_percent_left * 0.63);
+
+          if ( this.runtime.left_motor_inverted){
+
+           // console.warn("Left Motor inverted from backward to  forward! ");
+
+            this.power_left   =   Math.round(this.power_in_percent_left * 0.63);
+          }
 
         break;
 
@@ -713,6 +808,13 @@ return 100;
           this.power_right   =   Math.round(this.power_in_percent_right * 0.63);
           this.sim_pr=Math.round(this.power_in_percent_right * 0.63);
 
+          if ( this.runtime.right_motor_inverted){
+
+           // console.warn("Right motor inverted from forward to backward! ");
+
+            this.power_right  =   Math.round(this.power_in_percent_right * 0.63) +  64;
+          }
+
         break;
 
       case "direction_backward":
@@ -720,6 +822,13 @@ return 100;
 
           this.power_right   =   Math.round(this.power_in_percent_right * 0.63) +  64;
           this.sim_pr=-Math.round(this.power_in_percent_right * 0.63);
+
+          if ( this.runtime.right_motor_inverted){
+
+           // console.warn("Right Motor inverted from backward to  forward! ");
+
+            this.power_right  =   Math.round(this.power_in_percent_right * 0.63);
+          }
 
         break;
 
@@ -895,6 +1004,30 @@ return 100;
         }
         let power_left =   Math.round(30 * 0.63);
         let power_right =  Math.round(30 * 0.63) + 64;
+       
+        // if ( this.runtime.are_motors_inverted){
+
+        //   console.warn("robot_turnright: Motors inverted from right to  left! ");
+
+        //   power_left   =   Math.round(30 * 0.63) + 64;
+        //   power_right  =   Math.round(30 * 0.63);
+        // }
+
+        if ( this.runtime.left_motor_inverted){
+
+         // console.warn("Left Motor inverted from right to  left! ");
+
+          power_left   =   Math.round(30 * 0.63) + 64;
+         
+        }
+
+        if ( this.runtime.right_motor_inverted){
+
+         // console.warn("Right Motor inverted from right to  left! ");
+
+          power_right  =   Math.round(30 * 0.63);
+        }
+
         clearInterval(this.sim_int);
 
         if(this.runtime.sim_ac){
@@ -987,6 +1120,32 @@ return 100;
 
               let power_left =   Math.round(30 * 0.63) + 64;
               let power_right =  Math.round(30 * 0.63);
+
+              // if ( this.runtime.are_motors_inverted){
+
+              //   console.warn("robot_turnleft: Motors inverted from left to right! ");
+      
+              //   power_left   =   Math.round(30 * 0.63);
+              //   power_right  =   Math.round(30 * 0.63) + 64;
+              // }
+
+              if ( this.runtime.left_motor_inverted){
+
+               // console.warn("Left Motor  inverted from left to  right! ");
+  
+                power_left   =   Math.round(30 * 0.63);
+               
+              }
+  
+              if ( this.runtime.right_motor_inverted){
+  
+               // console.warn("Right Motor inverted from left to  right! ");
+  
+               
+                power_right  =   Math.round(30 * 0.63) + 64;
+              }
+
+
               if(this.runtime.sim_ac){
                   clearInterval(this.sim_int);
                     this.start_deg = util.target.direction;
